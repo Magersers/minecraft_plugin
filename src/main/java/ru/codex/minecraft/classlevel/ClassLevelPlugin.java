@@ -164,4 +164,12 @@ public class ClassLevelPlugin extends JavaPlugin {
     public double smithChanceForTenEnchants(int level) {
         return Math.min(Math.max(0, level - 4) * 0.0035, 0.02);
     }
+
+    public double crafterResourceReturnChance(int level) {
+        return Math.min(0.12 + (Math.max(1, level) - 1) * 0.02, 0.30);
+    }
+
+    public double crafterFreeCraftChance(int level) {
+        return level >= MAX_LEVEL ? 0.08 : 0.0;
+    }
 }

@@ -53,6 +53,7 @@ public class ClassSelectionListener implements Listener {
         PlayerClass selectedClass = switch (event.getCurrentItem().getType()) {
             case IRON_PICKAXE -> PlayerClass.HAPPY_MINER;
             case ANVIL -> PlayerClass.BLACKSMITH;
+            case CRAFTING_TABLE -> PlayerClass.CRAFTER;
             default -> null;
         };
 
@@ -120,8 +121,22 @@ public class ClassSelectionListener implements Listener {
         ));
         smith.setItemMeta(smithMeta);
 
-        inventory.setItem(11, miner);
-        inventory.setItem(15, smith);
+        ItemStack crafter = new ItemStack(Material.CRAFTING_TABLE);
+        ItemMeta crafterMeta = crafter.getItemMeta();
+        crafterMeta.setDisplayName("§6Крафтер");
+        crafterMeta.setLore(List.of(
+                "§7После крафта часть ресурсов может вернуться",
+                "§7Шанс растёт с уровнем (до ~30%)",
+                "§7На 10 уровне: §68% шанс бесплатного крафта",
+                "§7Анти-дюп: не работает на блоках/слитках/самоцветах",
+                "§7Прокачка: крафт любых предметов",
+                "§eНажмите, чтобы выбрать"
+        ));
+        crafter.setItemMeta(crafterMeta);
+
+        inventory.setItem(10, miner);
+        inventory.setItem(13, smith);
+        inventory.setItem(16, crafter);
         return inventory;
     }
 }

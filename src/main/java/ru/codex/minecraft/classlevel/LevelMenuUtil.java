@@ -58,6 +58,11 @@ public final class LevelMenuUtil {
                 infoLore.add("§f5 шт: §a" + asPercent(plugin.smithChanceForFiveEnchants(progress.getLevel())));
                 infoLore.add("§f10 шт: §a" + asPercent(plugin.smithChanceForTenEnchants(progress.getLevel())));
             }
+
+            if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
+                infoLore.add("§7Шанс возврата ресурсов: §a" + asPercent(plugin.crafterResourceReturnChance(progress.getLevel())));
+                infoLore.add("§7Шанс бесплатного крафта: §6" + asPercent(plugin.crafterFreeCraftChance(progress.getLevel())));
+            }
         }
 
         infoMeta.setLore(infoLore);
@@ -74,6 +79,15 @@ public final class LevelMenuUtil {
                     "§7шансы на 1/3/5/10 зачарований",
                     "§7Уровень зачарований выбирается случайно",
                     "§7Прокачка: крафт любой брони"
+            ));
+        } else if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
+            rewardMeta.setLore(List.of(
+                    "§7Ур. 1: ~12% возврата части ресурсов",
+                    "§7Ур. 5: ~20% возврата части ресурсов",
+                    "§7Ур. 10: ~30% возврата части ресурсов",
+                    "§7Ур. 10: §68% шанс бесплатного крафта",
+                    "§7Бесплатный крафт не работает",
+                    "§7на блоках/слитках/самоцветах (анти-дюп)"
             ));
         } else {
             rewardMeta.setLore(List.of(

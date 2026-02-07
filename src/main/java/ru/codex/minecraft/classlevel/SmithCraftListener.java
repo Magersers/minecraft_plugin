@@ -9,10 +9,29 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class SmithCraftListener implements Listener {
+    private static final Set<Material> CRAFTER_FREE_CRAFT_EXCLUDED = EnumSet.of(
+            Material.IRON_INGOT,
+            Material.GOLD_INGOT,
+            Material.COPPER_INGOT,
+            Material.NETHERITE_INGOT,
+            Material.IRON_NUGGET,
+            Material.GOLD_NUGGET,
+            Material.DIAMOND,
+            Material.EMERALD,
+            Material.LAPIS_LAZULI,
+            Material.REDSTONE,
+            Material.COAL,
+            Material.CHARCOAL,
+            Material.QUARTZ,
+            Material.AMETHYST_SHARD
+    );
+
     private final ClassLevelPlugin plugin;
 
     public SmithCraftListener(ClassLevelPlugin plugin) {
@@ -31,10 +50,17 @@ public class SmithCraftListener implements Listener {
         }
 
         PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
-        if (progress.getPlayerClass() != PlayerClass.BLACKSMITH) {
+        if (progress.getPlayerClass() == PlayerClass.BLACKSMITH) {
+            processBlacksmithCraft(event, player, progress, crafted);
             return;
         }
 
+        if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
+            processCrafterCraft(event, player, progress, crafted);
+        }
+    }
+
+    private void processBlacksmithCraft(CraftItemEvent event, Player player, PlayerProgress progress, ItemStack crafted) {
         if (isArmor(crafted.getType())) {
             plugin.giveClassXp(player, armorCraftXp(crafted.getType()), PlayerClass.BLACKSMITH);
         }
@@ -48,6 +74,67 @@ public class SmithCraftListener implements Listener {
                 player.sendMessage("§dКузнец: предмет получил §e" + enchantCount + " §dслучайных зачарований случайного уровня.");
             }
         }
+    }
+
+    private void processCrafterCraft(CraftItemEvent event, Player player, PlayerProgress progress, ItemStack crafted) {
+        plugin.giveClassXp(player, crafterCraftXp(crafted.getType()), PlayerClass.CRAFTER);
+
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        if (plugin.crafterFreeCraftChance(progress.getLevel()) > 0
+                && isFreeCraftAllowed(crafted.getType())
+                && random.nextDouble() < plugin.crafterFreeCraftChance(progress.getLevel())) {
+            returnOneCraftCost(player, event.getInventory().getMatrix());
+            player.sendMessage("§6Крафтер: бесплатный крафт! Ресурсы полностью возвращены.");
+            return;
+        }
+
+        if (random.nextDouble() < plugin.crafterResourceReturnChance(progress.getLevel())) {
+            returnOneCraftCost(player, event.getInventory().getMatrix());
+            player.sendMessage("§bКрафтер: часть ресурсов вернулась после крафта.");
+        }
+    }
+
+    private void returnOneCraftCost(Player player, ItemStack[] matrix) {
+        if (matrix == null) {
+            return;
+        }
+
+        for (ItemStack ingredient : matrix) {
+            if (ingredient == null || ingredient.getType().isAir()) {
+                continue;
+            }
+
+            ItemStack refund = ingredient.clone();
+            refund.setAmount(1);
+            player.getInventory().addItem(refund).values().forEach(leftover ->
+                    player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+        }
+    }
+
+    private boolean isFreeCraftAllowed(Material result) {
+        if (result.name().endsWith("_BLOCK")) {
+            return false;
+        }
+        return !CRAFTER_FREE_CRAFT_EXCLUDED.contains(result);
+    }
+
+    private int crafterCraftXp(Material result) {
+        if (result.name().endsWith("_CHESTPLATE") || result.name().endsWith("_LEGGINGS")) {
+            return 95;
+        }
+        if (result.name().endsWith("_HELMET") || result.name().endsWith("_BOOTS") || result.name().endsWith("_SWORD")
+                || result.name().endsWith("_AXE") || result.name().endsWith("_PICKAXE")) {
+            return 75;
+        }
+        if (result.name().endsWith("_PLATE") || result == Material.PISTON || result == Material.OBSERVER
+                || result == Material.REDSTONE_COMPARATOR || result == Material.REPEATER) {
+            return 60;
+        }
+        if (result == Material.ENCHANTING_TABLE || result == Material.ANVIL || result == Material.SMITHING_TABLE
+                || result == Material.BREWING_STAND) {
+            return 120;
+        }
+        return 45;
     }
 
     private int rollEnchantCount(int level) {
