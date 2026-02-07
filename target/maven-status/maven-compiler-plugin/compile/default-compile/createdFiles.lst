@@ -1,0 +1,12 @@
+ru/codex/minecraft/classlevel/ClassSelectionListener.class
+ru/codex/minecraft/classlevel/ClassAdminCommand.class
+ru/codex/minecraft/classlevel/MiningListener.class
+ru/codex/minecraft/classlevel/LevelMenuUtil.class
+ru/codex/minecraft/classlevel/LevelMenuCommand.class
+ru/codex/minecraft/classlevel/ClassLevelPlugin.class
+ru/codex/minecraft/classlevel/PlayerClass.class
+ru/codex/minecraft/classlevel/SmithCraftListener.class
+ru/codex/minecraft/classlevel/PlayerProgress.class
+ru/codex/minecraft/classlevel/LevelMenuListener.class
+ru/codex/minecraft/classlevel/PlayerDataManager.class
+ru/codex/minecraft/classlevel/ClassSelectionListener$1.class

@@ -1,0 +1,18 @@
+name: ClassLevelPlugin
+version: 1.0.0
+main: ru.codex.minecraft.classlevel.ClassLevelPlugin
+api-version: '1.21'
+authors: [Codex]
+commands:
+  lvl:
+    description: Открыть меню прокачки класса
+    usage: /lvl
+
+  resetclass:
+    description: Сбросить класс игрока
+    usage: /resetclass <игрок>
+    permission: classlevel.admin.reset
+permissions:
+  classlevel.admin.reset:
+    description: Позволяет сбрасывать класс игрокам
+    default: op
