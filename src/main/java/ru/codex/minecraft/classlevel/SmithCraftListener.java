@@ -127,7 +127,7 @@ public class SmithCraftListener implements Listener {
             return 75;
         }
         if (result.name().endsWith("_PLATE") || result == Material.PISTON || result == Material.OBSERVER
-                || result == Material.REDSTONE_COMPARATOR || result == Material.REPEATER) {
+                || result == Material.COMPARATOR || result == Material.REPEATER) {
             return 60;
         }
         if (result == Material.ENCHANTING_TABLE || result == Material.ANVIL || result == Material.SMITHING_TABLE

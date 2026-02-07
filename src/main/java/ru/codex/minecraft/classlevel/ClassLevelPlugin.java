@@ -132,7 +132,7 @@ public class ClassLevelPlugin extends JavaPlugin {
         PlayerProgress progress = dataManager.getOrCreate(player.getUniqueId());
         player.removePotionEffect(PotionEffectType.LUCK);
         player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-        player.removePotionEffect(PotionEffectType.FAST_DIGGING);
+        player.removePotionEffect(PotionEffectType.HASTE);
 
         if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
             int luckLevel = 1 + (progress.getLevel() / 3);
@@ -144,7 +144,7 @@ public class ClassLevelPlugin extends JavaPlugin {
             }
 
             if (progress.getLevel() >= MAX_LEVEL) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, PotionEffect.INFINITE_DURATION, 0, true, false, true));
             }
         }
     }
