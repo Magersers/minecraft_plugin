@@ -112,8 +112,8 @@ public class ClassSelectionListener implements Listener {
         ItemMeta smithMeta = smith.getItemMeta();
         smithMeta.setDisplayName("§6Кузнец");
         smithMeta.setLore(List.of(
-                "§75% на 1 ур.: 1 случайное зачарование I",
-                "§7Шанс 3/5/10 зачарований растет с уровнем",
+                "§7На 1 уровне: ~12% (1), ~2% (3 зач.)",
+                "§7С ростом уровня шансы заметно растут",
                 "§7Прокачка: крафт брони",
                 "§eНажмите, чтобы выбрать"
         ));

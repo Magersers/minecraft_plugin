@@ -66,8 +66,8 @@ public final class LevelMenuUtil {
         rewardMeta.setDisplayName("§6Награды за уровни");
         if (progress.getPlayerClass() == PlayerClass.BLACKSMITH) {
             rewardMeta.setLore(List.of(
-                    "§7Базово (ур.1): 5% на 1 зачарование",
-                    "§7По уровням постепенно растут",
+                    "§7Базово (ур.1): 12%/2%/0%/0%",
+                    "§7На 10 ур.: до 35%/15%/6%/2%",
                     "§7шансы на 1/3/5/10 зачарований",
                     "§7Все зачарования выдаются I уровня",
                     "§7Прокачка: крафт любой брони"

@@ -7,3 +7,12 @@ commands:
   lvl:
     description: Открыть меню прокачки класса
     usage: /lvl
+
+  resetclass:
+    description: Сбросить класс игрока
+    usage: /resetclass <игрок>
+    permission: classlevel.admin.reset
+permissions:
+  classlevel.admin.reset:
+    description: Позволяет сбрасывать класс игрокам
+    default: op

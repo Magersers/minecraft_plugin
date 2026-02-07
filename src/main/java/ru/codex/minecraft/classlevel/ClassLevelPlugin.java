@@ -14,6 +14,7 @@ public class ClassLevelPlugin extends JavaPlugin {
     private static final int[] NEXT_LEVEL_REQUIREMENTS = {0, 1000, 2200, 3600, 5200, 7000, 9000, 11300, 13800, 16500};
 
     private PlayerDataManager dataManager;
+    private int effectRefreshTaskId = -1;
     private final Map<Material, Integer> oreXp = Map.ofEntries(
             Map.entry(Material.COAL_ORE, 8),
             Map.entry(Material.DEEPSLATE_COAL_ORE, 10),
@@ -54,6 +55,20 @@ public class ClassLevelPlugin extends JavaPlugin {
             getLogger().severe("Command /lvl is missing in plugin.yml");
         }
 
+        ClassAdminCommand classAdminCommand = new ClassAdminCommand(this);
+        if (getCommand("resetclass") != null) {
+            getCommand("resetclass").setExecutor(classAdminCommand);
+            getCommand("resetclass").setTabCompleter(classAdminCommand);
+        } else {
+            getLogger().severe("Command /resetclass is missing in plugin.yml");
+        }
+
+        effectRefreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                applyClassEffects(online);
+            }
+        }, 20L, 200L);
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             applyClassEffects(player);
         }
@@ -61,6 +76,11 @@ public class ClassLevelPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (effectRefreshTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(effectRefreshTaskId);
+            effectRefreshTaskId = -1;
+        }
+
         if (dataManager != null) {
             dataManager.save();
         }
@@ -125,18 +145,18 @@ public class ClassLevelPlugin extends JavaPlugin {
     }
 
     public double smithChanceForOneEnchant(int level) {
-        return Math.min(0.05 + (Math.max(1, level) - 1) * 0.01, 0.14);
+        return Math.min(0.12 + (Math.max(1, level) - 1) * 0.025, 0.35);
     }
 
     public double smithChanceForThreeEnchants(int level) {
-        return Math.min(Math.max(0, level - 2) * 0.003, 0.024);
+        return Math.min(0.02 + (Math.max(1, level) - 1) * 0.014, 0.15);
     }
 
     public double smithChanceForFiveEnchants(int level) {
-        return Math.min(Math.max(0, level - 5) * 0.0015, 0.0075);
+        return Math.min(Math.max(0, level - 2) * 0.0075, 0.06);
     }
 
     public double smithChanceForTenEnchants(int level) {
-        return Math.min(Math.max(0, level - 8) * 0.0005, 0.001);
+        return Math.min(Math.max(0, level - 4) * 0.0035, 0.02);
     }
 }
