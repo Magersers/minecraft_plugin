@@ -41,6 +41,9 @@ public class ClassAdminCommand implements CommandExecutor, TabCompleter {
         progress.setPlayerClass(null);
         progress.setLevel(1);
         progress.setXp(0);
+        progress.setCombatClass(null);
+        progress.setCombatLevel(1);
+        progress.setCombatXp(0);
 
         plugin.applyClassEffects(target);
         plugin.getDataManager().save();

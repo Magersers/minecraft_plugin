@@ -17,6 +17,7 @@ import java.util.List;
 
 public class ClassSelectionListener implements Listener {
     public static final String CLASS_MENU_TITLE = "§0Выбор класса";
+    public static final String COMBAT_MENU_TITLE = "§0Выбор боевого класса";
 
     private final ClassLevelPlugin plugin;
 
@@ -32,12 +33,15 @@ public class ClassSelectionListener implements Listener {
         PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
         if (progress.getPlayerClass() == null) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> player.openInventory(createClassMenu()), 20L);
+        } else if (progress.getCombatClass() == null) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> player.openInventory(createCombatMenu()), 20L);
         }
     }
 
     @EventHandler
     public void onClassMenuClick(InventoryClickEvent event) {
-        if (!CLASS_MENU_TITLE.equals(event.getView().getTitle())) {
+        String title = event.getView().getTitle();
+        if (!CLASS_MENU_TITLE.equals(title) && !COMBAT_MENU_TITLE.equals(title)) {
             return;
         }
         event.setCancelled(true);
@@ -50,36 +54,63 @@ public class ClassSelectionListener implements Listener {
             return;
         }
 
-        PlayerClass selectedClass = switch (event.getCurrentItem().getType()) {
+        PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
+
+        if (CLASS_MENU_TITLE.equals(title)) {
+            handlePrimaryClassChoice(player, progress, event.getCurrentItem().getType());
+            return;
+        }
+
+        handleCombatClassChoice(player, progress, event.getCurrentItem().getType());
+    }
+
+    private void handlePrimaryClassChoice(Player player, PlayerProgress progress, Material type) {
+        PlayerClass selectedClass = switch (type) {
             case IRON_PICKAXE -> PlayerClass.HAPPY_MINER;
             case ANVIL -> PlayerClass.BLACKSMITH;
             case CRAFTING_TABLE -> PlayerClass.CRAFTER;
             default -> null;
         };
 
-        if (selectedClass == null) {
-            return;
-        }
-
-        PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
-        if (progress.getPlayerClass() != null) {
-            player.closeInventory();
+        if (selectedClass == null || progress.getPlayerClass() != null) {
             return;
         }
 
         progress.setPlayerClass(selectedClass);
         progress.setLevel(1);
         progress.setXp(0);
+        plugin.getDataManager().save();
+
+        player.sendMessage("§aВы выбрали класс развития: §e" + selectedClass.displayName() + "§a.");
+        Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(createCombatMenu()));
+    }
+
+    private void handleCombatClassChoice(Player player, PlayerProgress progress, Material type) {
+        CombatClass selectedClass = switch (type) {
+            case IRON_SWORD -> CombatClass.WARRIOR;
+            case BOW -> CombatClass.ARCHER;
+            case SHIELD -> CombatClass.TANK;
+            default -> null;
+        };
+
+        if (selectedClass == null || progress.getCombatClass() != null) {
+            return;
+        }
+
+        progress.setCombatClass(selectedClass);
+        progress.setCombatLevel(1);
+        progress.setCombatXp(0);
 
         plugin.applyClassEffects(player);
         plugin.getDataManager().save();
         player.closeInventory();
-        player.sendMessage("§aВы выбрали класс: §e" + selectedClass.displayName() + "§a. Откройте меню развития командой §6/lvl§a.");
+        player.sendMessage("§aВы выбрали боевой класс: §e" + selectedClass.displayName() + "§a. Откройте меню развития командой §6/lvl§a.");
     }
 
     @EventHandler
     public void onClassMenuClose(InventoryCloseEvent event) {
-        if (!CLASS_MENU_TITLE.equals(event.getView().getTitle())) {
+        String title = event.getView().getTitle();
+        if (!CLASS_MENU_TITLE.equals(title) && !COMBAT_MENU_TITLE.equals(title)) {
             return;
         }
 
@@ -90,6 +121,11 @@ public class ClassSelectionListener implements Listener {
         PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
         if (progress.getPlayerClass() == null) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> player.openInventory(createClassMenu()), 1L);
+            return;
+        }
+
+        if (progress.getCombatClass() == null) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> player.openInventory(createCombatMenu()), 1L);
         }
     }
 
@@ -137,6 +173,51 @@ public class ClassSelectionListener implements Listener {
         inventory.setItem(10, miner);
         inventory.setItem(13, smith);
         inventory.setItem(16, crafter);
+        return inventory;
+    }
+
+    public static Inventory createCombatMenu() {
+        Inventory inventory = Bukkit.createInventory(null, 27, COMBAT_MENU_TITLE);
+
+        ItemStack warrior = new ItemStack(Material.IRON_SWORD);
+        ItemMeta warriorMeta = warrior.getItemMeta();
+        warriorMeta.setDisplayName("§cВоин");
+        warriorMeta.setLore(List.of(
+                "§7Постоянный эффект: §cСила",
+                "§7С уровнем сила растёт до §cV",
+                "§7Прокачка: очень медленные убийства",
+                "§7мобов/игроков ближним оружием",
+                "§eНажмите, чтобы выбрать"
+        ));
+        warriorMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        warrior.setItemMeta(warriorMeta);
+
+        ItemStack archer = new ItemStack(Material.BOW);
+        ItemMeta archerMeta = archer.getItemMeta();
+        archerMeta.setDisplayName("§aЛучник");
+        archerMeta.setLore(List.of(
+                "§7Шанс не потратить стрелу любого типа",
+                "§7Доп. урон из лука растёт с уровнем",
+                "§7Прокачка: очень медленные убийства",
+                "§7из оружия дальнего боя",
+                "§eНажмите, чтобы выбрать"
+        ));
+        archer.setItemMeta(archerMeta);
+
+        ItemStack tank = new ItemStack(Material.SHIELD);
+        ItemMeta tankMeta = tank.getItemMeta();
+        tankMeta.setDisplayName("§9Танк");
+        tankMeta.setLore(List.of(
+                "§7Получает бонус к максимальному HP",
+                "§7Чем выше уровень — тем больше HP",
+                "§7Прокачка: очень медленно от получения урона",
+                "§eНажмите, чтобы выбрать"
+        ));
+        tank.setItemMeta(tankMeta);
+
+        inventory.setItem(10, warrior);
+        inventory.setItem(13, archer);
+        inventory.setItem(16, tank);
         return inventory;
     }
 }

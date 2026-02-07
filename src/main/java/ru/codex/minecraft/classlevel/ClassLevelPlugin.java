@@ -1,18 +1,24 @@
 package ru.codex.minecraft.classlevel;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Sound;
 import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class ClassLevelPlugin extends JavaPlugin {
     private static final int MAX_LEVEL = 10;
     private static final int[] NEXT_LEVEL_REQUIREMENTS = {0, 1000, 2200, 3600, 5200, 7000, 9000, 11300, 13800, 16500};
+    private static final int[] NEXT_COMBAT_LEVEL_REQUIREMENTS = {0, 1800, 4200, 7600, 11800, 17000, 23500, 31500, 41000, 52000};
+    private static final UUID TANK_HEALTH_MODIFIER_UUID = UUID.fromString("0ef4e9db-033b-4da7-8670-7d15d7f33062");
 
     private PlayerDataManager dataManager;
     private int effectRefreshTaskId = -1;
@@ -46,6 +52,7 @@ public class ClassLevelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ClassSelectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MiningListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SmithCraftListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new CombatProgressListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LevelMenuListener(), this);
 
         LevelMenuCommand levelMenuCommand = new LevelMenuCommand(this);
@@ -102,6 +109,13 @@ public class ClassLevelPlugin extends JavaPlugin {
         return NEXT_LEVEL_REQUIREMENTS[currentLevel];
     }
 
+    public int combatXpForNextLevel(int currentLevel) {
+        if (currentLevel >= MAX_LEVEL) {
+            return 0;
+        }
+        return NEXT_COMBAT_LEVEL_REQUIREMENTS[currentLevel];
+    }
+
     public int getOreXp(Material material) {
         return oreXp.getOrDefault(material, 0);
     }
@@ -130,11 +144,36 @@ public class ClassLevelPlugin extends JavaPlugin {
         }
     }
 
+    public void giveCombatXp(Player player, int amount, CombatClass expectedClass) {
+        if (amount <= 0) {
+            return;
+        }
+
+        PlayerProgress progress = dataManager.getOrCreate(player.getUniqueId());
+        if (progress.getCombatClass() != expectedClass || progress.getCombatLevel() >= MAX_LEVEL) {
+            return;
+        }
+
+        progress.setCombatXp(progress.getCombatXp() + amount);
+        int oldLevel = progress.getCombatLevel();
+        while (progress.getCombatLevel() < MAX_LEVEL && progress.getCombatXp() >= combatXpForNextLevel(progress.getCombatLevel())) {
+            progress.setCombatLevel(progress.getCombatLevel() + 1);
+        }
+
+        if (progress.getCombatLevel() > oldLevel) {
+            player.sendMessage("§aБоевой класс §e" + expectedClass.displayName() + " §aулучшен до уровня §e" + progress.getCombatLevel() + "§a!");
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 0.9f);
+            applyClassEffects(player);
+            dataManager.save();
+        }
+    }
+
     public void applyClassEffects(Player player) {
         PlayerProgress progress = dataManager.getOrCreate(player.getUniqueId());
         player.removePotionEffect(PotionEffectType.LUCK);
         player.removePotionEffect(PotionEffectType.NIGHT_VISION);
         player.removePotionEffect(PotionEffectType.HASTE);
+        player.removePotionEffect(PotionEffectType.STRENGTH);
 
         if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
             int luckLevel = 1 + (progress.getLevel() / 3);
@@ -149,6 +188,65 @@ public class ClassLevelPlugin extends JavaPlugin {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, PotionEffect.INFINITE_DURATION, 0, true, false, true));
             }
         }
+
+        if (progress.getCombatClass() == CombatClass.WARRIOR) {
+            int strengthLevel = warriorStrengthLevel(progress.getCombatLevel());
+            int amplifier = Math.max(0, strengthLevel - 1);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, PotionEffect.INFINITE_DURATION, amplifier, true, false, true));
+        }
+
+        applyTankHealth(player, progress);
+    }
+
+    private void applyTankHealth(Player player, PlayerProgress progress) {
+        AttributeInstance maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (maxHealth == null) {
+            return;
+        }
+
+        AttributeModifier existing = maxHealth.getModifier(TANK_HEALTH_MODIFIER_UUID);
+        if (existing != null) {
+            maxHealth.removeModifier(existing);
+        }
+
+        if (progress.getCombatClass() != CombatClass.TANK) {
+            if (player.getHealth() > maxHealth.getValue()) {
+                player.setHealth(maxHealth.getValue());
+            }
+            return;
+        }
+
+        double bonusHealth = tankBonusHealth(progress.getCombatLevel());
+        if (bonusHealth > 0) {
+            AttributeModifier modifier = new AttributeModifier(
+                    TANK_HEALTH_MODIFIER_UUID,
+                    "classlevel_tank_health_bonus",
+                    bonusHealth,
+                    AttributeModifier.Operation.ADD_NUMBER
+            );
+            maxHealth.addModifier(modifier);
+        }
+
+        if (player.getHealth() > maxHealth.getValue()) {
+            player.setHealth(maxHealth.getValue());
+        }
+    }
+
+    public int warriorStrengthLevel(int combatLevel) {
+        int lvl = 1 + (Math.max(1, combatLevel) - 1) / 2;
+        return Math.min(5, lvl);
+    }
+
+    public double archerArrowSaveChance(int combatLevel) {
+        return Math.min(0.08 + (Math.max(1, combatLevel) - 1) * 0.015, 0.22);
+    }
+
+    public double archerDamageBonus(int combatLevel) {
+        return Math.min(0.05 + (Math.max(1, combatLevel) - 1) * 0.02, 0.23);
+    }
+
+    public double tankBonusHealth(int combatLevel) {
+        return 2.0 + (Math.max(1, combatLevel) - 1) * 1.2;
     }
 
     public double smithChanceForOneEnchant(int level) {

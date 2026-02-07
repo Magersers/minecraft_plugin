@@ -56,9 +56,20 @@ public class PlayerDataManager {
                 }
             }
 
+            String combatClassName = playersSection.getString(key + ".combatClass");
+            CombatClass combatClass = null;
+            if (combatClassName != null) {
+                try {
+                    combatClass = CombatClass.valueOf(combatClassName);
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+
             int level = Math.max(1, playersSection.getInt(key + ".level", 1));
             int xp = Math.max(0, playersSection.getInt(key + ".xp", 0));
-            data.put(uuid, new PlayerProgress(playerClass, level, xp));
+            int combatLevel = Math.max(1, playersSection.getInt(key + ".combatLevel", 1));
+            int combatXp = Math.max(0, playersSection.getInt(key + ".combatXp", 0));
+            data.put(uuid, new PlayerProgress(playerClass, level, xp, combatClass, combatLevel, combatXp));
         }
     }
 
@@ -73,6 +84,9 @@ public class PlayerDataManager {
             config.set(base + ".class", progress.getPlayerClass() == null ? null : progress.getPlayerClass().name());
             config.set(base + ".level", progress.getLevel());
             config.set(base + ".xp", progress.getXp());
+            config.set(base + ".combatClass", progress.getCombatClass() == null ? null : progress.getCombatClass().name());
+            config.set(base + ".combatLevel", progress.getCombatLevel());
+            config.set(base + ".combatXp", progress.getCombatXp());
         }
 
         try {
