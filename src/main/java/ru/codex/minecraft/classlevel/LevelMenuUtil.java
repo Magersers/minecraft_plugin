@@ -43,8 +43,11 @@ public final class LevelMenuUtil {
             if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
                 int luckLevel = 1 + (progress.getLevel() / 3);
                 infoLore.add("§7Текущая награда: §aВезение " + toRoman(luckLevel));
-                if (progress.getLevel() >= plugin.getMaxLevel()) {
+                if (progress.getLevel() >= 5) {
                     infoLore.add("§7Доп. награда: §bНочное зрение");
+                }
+                if (progress.getLevel() >= plugin.getMaxLevel()) {
+                    infoLore.add("§7Финальная награда: §6Скорость копания I");
                 }
             }
 
@@ -76,9 +79,10 @@ public final class LevelMenuUtil {
             rewardMeta.setLore(List.of(
                     "§7Ур. 1: §aВезение I",
                     "§7Ур. 3: §aВезение II",
+                    "§7Ур. 5: §bНочное зрение",
                     "§7Ур. 6: §aВезение III",
                     "§7Ур. 9: §aВезение IV",
-                    "§7Ур. 10: §bНочное зрение"
+                    "§7Ур. 10: §6Скорость копания I"
             ));
         }
         rewards.setItemMeta(rewardMeta);
