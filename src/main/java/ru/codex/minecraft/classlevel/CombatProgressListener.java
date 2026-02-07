@@ -17,10 +17,14 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class CombatProgressListener implements Listener {
     private final ClassLevelPlugin plugin;
+    private final Map<UUID, Integer> archerShotsWithoutProc = new ConcurrentHashMap<>();
 
     public CombatProgressListener(ClassLevelPlugin plugin) {
         this.plugin = plugin;
@@ -94,18 +98,44 @@ public class CombatProgressListener implements Listener {
             return;
         }
 
-        if (ThreadLocalRandom.current().nextDouble() >= plugin.archerArrowSaveChance(progress.getCombatLevel())) {
+        if (!rollArrowSave(player, progress)) {
             return;
         }
 
+        event.setConsumeItem(false);
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.35f);
+
         if (player.getGameMode() == GameMode.CREATIVE) {
-            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.35f);
             return;
         }
 
         ItemStack refund = consumable.asOne();
-        Bukkit.getScheduler().runTask(plugin, () -> player.getInventory().addItem(refund));
-        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.35f);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            player.getInventory().addItem(refund);
+        });
+    }
+
+    private boolean rollArrowSave(Player player, PlayerProgress progress) {
+        UUID uuid = player.getUniqueId();
+        double chance = plugin.archerArrowSaveChance(progress.getCombatLevel());
+
+        if (ThreadLocalRandom.current().nextDouble() < chance) {
+            archerShotsWithoutProc.put(uuid, 0);
+            return true;
+        }
+
+        int shots = archerShotsWithoutProc.getOrDefault(uuid, 0) + 1;
+        int guaranteeEvery = Math.max(1, (int) Math.ceil(1.0 / Math.max(0.0001, chance)));
+        if (shots >= guaranteeEvery) {
+            archerShotsWithoutProc.put(uuid, 0);
+            return true;
+        }
+
+        archerShotsWithoutProc.put(uuid, shots);
+        return false;
     }
 
     @EventHandler(ignoreCancelled = true)
