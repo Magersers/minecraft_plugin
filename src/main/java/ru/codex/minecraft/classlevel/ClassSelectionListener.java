@@ -14,12 +14,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassSelectionListener implements Listener {
     public static final String CLASS_MENU_TITLE = "§0Выбор класса";
     public static final String COMBAT_MENU_TITLE = "§0Выбор боевого класса";
 
     private final ClassLevelPlugin plugin;
+    private final Set<UUID> switchingToCombat = ConcurrentHashMap.newKeySet();
 
     public ClassSelectionListener(ClassLevelPlugin plugin) {
         this.plugin = plugin;
@@ -81,8 +85,18 @@ public class ClassSelectionListener implements Listener {
         progress.setXp(0);
         plugin.getDataManager().save();
 
+        switchingToCombat.add(player.getUniqueId());
         player.sendMessage("§aВы выбрали класс развития: §e" + selectedClass.displayName() + "§a.");
-        Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(createCombatMenu()));
+        player.closeInventory();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            switchingToCombat.remove(player.getUniqueId());
+            if (player.isOnline()) {
+                PlayerProgress latest = plugin.getDataManager().getOrCreate(player.getUniqueId());
+                if (latest.getCombatClass() == null) {
+                    player.openInventory(createCombatMenu());
+                }
+            }
+        }, 1L);
     }
 
     private void handleCombatClassChoice(Player player, PlayerProgress progress, Material type) {
@@ -115,6 +129,10 @@ public class ClassSelectionListener implements Listener {
         }
 
         if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+
+        if (switchingToCombat.contains(player.getUniqueId())) {
             return;
         }
 
@@ -184,9 +202,9 @@ public class ClassSelectionListener implements Listener {
         warriorMeta.setDisplayName("§cВоин");
         warriorMeta.setLore(List.of(
                 "§7Постоянный эффект: §cСила",
-                "§7С уровнем сила растёт до §cV",
-                "§7Прокачка: очень медленные убийства",
-                "§7мобов/игроков ближним оружием",
+                "§7Прокачка: убийства в ближнем бою",
+                "§7(враждебные мобы и игроки)",
+                "§7Требования отображаются в /lvl",
                 "§eНажмите, чтобы выбрать"
         ));
         warriorMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
@@ -196,10 +214,10 @@ public class ClassSelectionListener implements Listener {
         ItemMeta archerMeta = archer.getItemMeta();
         archerMeta.setDisplayName("§aЛучник");
         archerMeta.setLore(List.of(
-                "§7Шанс не потратить стрелу любого типа",
-                "§7Доп. урон из лука растёт с уровнем",
-                "§7Прокачка: очень медленные убийства",
-                "§7из оружия дальнего боя",
+                "§7Шанс не тратить стрелы любого типа",
+                "§7+ бонус к урону из лука/арбалета",
+                "§7Прокачка: убийства дальним оружием",
+                "§7Все проценты и требования в /lvl",
                 "§eНажмите, чтобы выбрать"
         ));
         archer.setItemMeta(archerMeta);
@@ -209,8 +227,9 @@ public class ClassSelectionListener implements Listener {
         tankMeta.setDisplayName("§9Танк");
         tankMeta.setLore(List.of(
                 "§7Получает бонус к максимальному HP",
-                "§7Чем выше уровень — тем больше HP",
-                "§7Прокачка: очень медленно от получения урона",
+                "§7Прокачка за полученный урон",
+                "§7Прогресс считается в сердцах",
+                "§7Требования отображаются в /lvl",
                 "§eНажмите, чтобы выбрать"
         ));
         tank.setItemMeta(tankMeta);

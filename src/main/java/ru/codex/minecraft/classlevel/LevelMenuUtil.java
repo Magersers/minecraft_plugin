@@ -58,9 +58,16 @@ public final class LevelMenuUtil {
             if (progress.getCombatLevel() >= plugin.getMaxLevel()) {
                 combatLore.add("§aМаксимальный боевой уровень!");
             } else {
-                int next = plugin.combatXpForNextLevel(progress.getCombatLevel());
-                combatLore.add("§7Опыт: §b" + progress.getCombatXp() + "§7/§b" + next);
-                combatLore.add("§7До следующего уровня: §f" + Math.max(0, next - progress.getCombatXp()));
+                int next = plugin.combatRequirementForNextLevel(progress.getCombatClass(), progress.getCombatLevel());
+                combatLore.add("§7Прогресс уровня: §b" + progress.getCombatXp() + "§7/§b" + next);
+                if (progress.getCombatClass() == CombatClass.TANK) {
+                    double heartsNow = progress.getCombatXp() / 2.0;
+                    double heartsNeed = Math.max(0, (next - progress.getCombatXp()) / 2.0);
+                    combatLore.add("§7Получено урона: §c" + oneDecimal(heartsNow) + " ❤");
+                    combatLore.add("§7До уровня: §f" + oneDecimal(heartsNeed) + " ❤ урона");
+                } else {
+                    combatLore.add("§7До уровня: §f" + Math.max(0, next - progress.getCombatXp()) + " убийств");
+                }
             }
         }
         combatInfoMeta.setLore(combatLore);
@@ -98,25 +105,25 @@ public final class LevelMenuUtil {
         ItemMeta combatRewardsMeta = combatRewards.getItemMeta();
         combatRewardsMeta.setDisplayName("§6Награды боевых классов");
         if (progress.getCombatClass() == CombatClass.WARRIOR) {
+            int strength = plugin.warriorStrengthLevel(progress.getCombatLevel());
             combatRewardsMeta.setLore(List.of(
-                    "§7Воин: постоянная Сила",
-                    "§7с ростом уровня до §cСилы V",
-                    "§7Прокачка: очень медленные",
-                    "§7убийства в ближнем бою"
+                    "§7Воин: постоянная §cСила " + toRoman(strength),
+                    "§7Максимум: §cСила V",
+                    "§7Прокачка: убийства в ближнем бою"
             ));
         } else if (progress.getCombatClass() == CombatClass.ARCHER) {
+            double dmg = plugin.archerDamageBonus(progress.getCombatLevel()) * 100.0;
+            double save = plugin.archerArrowSaveChance(progress.getCombatLevel()) * 100.0;
             combatRewardsMeta.setLore(List.of(
-                    "§7Лучник: шанс не потратить",
-                    "§7любую стрелу + бонус урона",
-                    "§7Прокачка: очень медленные",
-                    "§7убийства дальним оружием"
+                    "§7Бонус урона из лука: §a+" + oneDecimal(dmg) + "%",
+                    "§7Шанс не потратить стрелу: §e" + oneDecimal(save) + "%",
+                    "§7Прокачка: убийства дальним оружием"
             ));
         } else if (progress.getCombatClass() == CombatClass.TANK) {
             combatRewardsMeta.setLore(List.of(
-                    "§7Танк: бонус к максимальному HP",
-                    "§7который растёт с уровнем",
-                    "§7Прокачка: очень медленно",
-                    "§7за получение урона"
+                    "§7Танк: бонус к HP §a+" + oneDecimal(plugin.tankBonusHealth(progress.getCombatLevel()) / 2.0) + " ❤",
+                    "§7Прогресс по полученному урону",
+                    "§7Прокачка ускорена примерно в 10 раз"
             ));
         } else {
             combatRewardsMeta.setLore(List.of("§7Выберите боевой класс."));
@@ -125,5 +132,20 @@ public final class LevelMenuUtil {
         inventory.setItem(16, combatRewards);
 
         return inventory;
+    }
+
+    private static String oneDecimal(double value) {
+        return String.format("%.1f", value);
+    }
+
+    private static String toRoman(int number) {
+        return switch (number) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            default -> String.valueOf(number);
+        };
     }
 }

@@ -17,7 +17,9 @@ import java.util.UUID;
 public class ClassLevelPlugin extends JavaPlugin {
     private static final int MAX_LEVEL = 10;
     private static final int[] NEXT_LEVEL_REQUIREMENTS = {0, 1000, 2200, 3600, 5200, 7000, 9000, 11300, 13800, 16500};
-    private static final int[] NEXT_COMBAT_LEVEL_REQUIREMENTS = {0, 1800, 4200, 7600, 11800, 17000, 23500, 31500, 41000, 52000};
+    private static final int[] WARRIOR_KILL_REQUIREMENTS = {0, 12, 20, 30, 42, 56, 72, 90, 110, 135};
+    private static final int[] ARCHER_KILL_REQUIREMENTS = {0, 14, 24, 36, 50, 66, 84, 104, 126, 150};
+    private static final int[] TANK_DAMAGE_REQUIREMENTS = {0, 60, 90, 130, 180, 240, 310, 390, 480, 580};
     private static final UUID TANK_HEALTH_MODIFIER_UUID = UUID.fromString("0ef4e9db-033b-4da7-8670-7d15d7f33062");
 
     private PlayerDataManager dataManager;
@@ -109,11 +111,16 @@ public class ClassLevelPlugin extends JavaPlugin {
         return NEXT_LEVEL_REQUIREMENTS[currentLevel];
     }
 
-    public int combatXpForNextLevel(int currentLevel) {
-        if (currentLevel >= MAX_LEVEL) {
+    public int combatRequirementForNextLevel(CombatClass combatClass, int currentLevel) {
+        if (combatClass == null || currentLevel >= MAX_LEVEL) {
             return 0;
         }
-        return NEXT_COMBAT_LEVEL_REQUIREMENTS[currentLevel];
+
+        return switch (combatClass) {
+            case WARRIOR -> WARRIOR_KILL_REQUIREMENTS[currentLevel];
+            case ARCHER -> ARCHER_KILL_REQUIREMENTS[currentLevel];
+            case TANK -> TANK_DAMAGE_REQUIREMENTS[currentLevel];
+        };
     }
 
     public int getOreXp(Material material) {
@@ -144,7 +151,7 @@ public class ClassLevelPlugin extends JavaPlugin {
         }
     }
 
-    public void giveCombatXp(Player player, int amount, CombatClass expectedClass) {
+    public void giveCombatProgress(Player player, int amount, CombatClass expectedClass) {
         if (amount <= 0) {
             return;
         }
@@ -156,8 +163,13 @@ public class ClassLevelPlugin extends JavaPlugin {
 
         progress.setCombatXp(progress.getCombatXp() + amount);
         int oldLevel = progress.getCombatLevel();
-        while (progress.getCombatLevel() < MAX_LEVEL && progress.getCombatXp() >= combatXpForNextLevel(progress.getCombatLevel())) {
+        while (progress.getCombatLevel() < MAX_LEVEL) {
+            int required = combatRequirementForNextLevel(expectedClass, progress.getCombatLevel());
+            if (required <= 0 || progress.getCombatXp() < required) {
+                break;
+            }
             progress.setCombatLevel(progress.getCombatLevel() + 1);
+            progress.setCombatXp(0);
         }
 
         if (progress.getCombatLevel() > oldLevel) {
@@ -238,15 +250,15 @@ public class ClassLevelPlugin extends JavaPlugin {
     }
 
     public double archerArrowSaveChance(int combatLevel) {
-        return Math.min(0.08 + (Math.max(1, combatLevel) - 1) * 0.015, 0.22);
+        return Math.min(0.10 + (Math.max(1, combatLevel) - 1) * 0.018, 0.26);
     }
 
     public double archerDamageBonus(int combatLevel) {
-        return Math.min(0.05 + (Math.max(1, combatLevel) - 1) * 0.02, 0.23);
+        return Math.min(0.06 + (Math.max(1, combatLevel) - 1) * 0.022, 0.26);
     }
 
     public double tankBonusHealth(int combatLevel) {
-        return 2.0 + (Math.max(1, combatLevel) - 1) * 1.2;
+        return 2.0 + (Math.max(1, combatLevel) - 1) * 1.6;
     }
 
     public double smithChanceForOneEnchant(int level) {

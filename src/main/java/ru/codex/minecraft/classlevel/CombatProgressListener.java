@@ -14,6 +14,8 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class CombatProgressListener implements Listener {
     private final ClassLevelPlugin plugin;
 
@@ -36,20 +38,16 @@ public class CombatProgressListener implements Listener {
         }
 
         EntityDamageEvent lastDamage = victim.getLastDamageCause();
-        if (!(lastDamage instanceof EntityDamageByEntityEvent damageByEntity)) {
-            return;
-        }
-
-        Entity damager = damageByEntity.getDamager();
+        Entity damager = (lastDamage instanceof EntityDamageByEntityEvent damageByEntity) ? damageByEntity.getDamager() : null;
         boolean victimPlayer = victim.getType() == EntityType.PLAYER;
 
         if (combatClass == CombatClass.WARRIOR && isMeleeKill(killer, damager)) {
-            plugin.giveCombatXp(killer, victimPlayer ? 35 : 12, CombatClass.WARRIOR);
+            plugin.giveCombatProgress(killer, victimPlayer ? 2 : 1, CombatClass.WARRIOR);
             return;
         }
 
         if (combatClass == CombatClass.ARCHER && isRangedKillByPlayer(killer, damager)) {
-            plugin.giveCombatXp(killer, victimPlayer ? 35 : 12, CombatClass.ARCHER);
+            plugin.giveCombatProgress(killer, victimPlayer ? 2 : 1, CombatClass.ARCHER);
         }
     }
 
@@ -88,7 +86,7 @@ public class CombatProgressListener implements Listener {
             return;
         }
 
-        if (java.util.concurrent.ThreadLocalRandom.current().nextDouble() < plugin.archerArrowSaveChance(progress.getCombatLevel())) {
+        if (ThreadLocalRandom.current().nextDouble() < plugin.archerArrowSaveChance(progress.getCombatLevel())) {
             event.setConsumeItem(false);
         }
     }
@@ -104,22 +102,28 @@ public class CombatProgressListener implements Listener {
             return;
         }
 
-        int xp = (int) Math.max(1, Math.floor(event.getFinalDamage() * 0.75));
-        plugin.giveCombatXp(player, xp, CombatClass.TANK);
+        int damagePoints = (int) Math.max(1, Math.round(event.getFinalDamage()));
+        plugin.giveCombatProgress(player, damagePoints, CombatClass.TANK);
     }
 
     private boolean isMeleeKill(Player killer, Entity damager) {
-        if (!(damager instanceof Player attackingPlayer) || !attackingPlayer.getUniqueId().equals(killer.getUniqueId())) {
+        if (damager instanceof Player attackingPlayer) {
+            return attackingPlayer.getUniqueId().equals(killer.getUniqueId()) && isMeleeWeapon(killer.getInventory().getItemInMainHand());
+        }
+
+        if (damager instanceof Projectile) {
             return false;
         }
 
-        ItemStack hand = killer.getInventory().getItemInMainHand();
+        return isMeleeWeapon(killer.getInventory().getItemInMainHand());
+    }
+
+    private boolean isMeleeWeapon(ItemStack hand) {
         if (hand == null) {
             return false;
         }
-
         String name = hand.getType().name();
-        return name.endsWith("_SWORD") || name.endsWith("_AXE") || hand.getType().name().equals("TRIDENT");
+        return name.endsWith("_SWORD") || name.endsWith("_AXE") || name.equals("TRIDENT") || name.equals("MACE");
     }
 
     private boolean isRangedKillByPlayer(Player killer, Entity damager) {
