@@ -45,7 +45,7 @@ public class SmithCraftListener implements Listener {
                 ItemStack enchanted = crafted.clone();
                 applyRandomEnchants(enchanted, enchantCount);
                 event.setCurrentItem(enchanted);
-                player.sendMessage("§dКузнец: предмет получил §e" + enchantCount + " §dслучайных зачарований I уровня.");
+                player.sendMessage("§dКузнец: предмет получил §e" + enchantCount + " §dслучайных зачарований случайного уровня.");
             }
         }
     }
@@ -84,7 +84,8 @@ public class SmithCraftListener implements Listener {
         for (int i = 0; i < rolls; i++) {
             int index = random.nextInt(pool.size());
             Enchantment enchantment = pool.remove(index);
-            item.addUnsafeEnchantment(enchantment, 1);
+            int randomLevel = 1 + random.nextInt(enchantment.getMaxLevel());
+            item.addUnsafeEnchantment(enchantment, randomLevel);
         }
     }
 
