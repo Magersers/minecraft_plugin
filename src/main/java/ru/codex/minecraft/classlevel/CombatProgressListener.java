@@ -1,5 +1,8 @@
 package ru.codex.minecraft.classlevel;
 
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Sound;
 import org.bukkit.entity.AbstractArrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -86,9 +89,23 @@ public class CombatProgressListener implements Listener {
             return;
         }
 
-        if (ThreadLocalRandom.current().nextDouble() < plugin.archerArrowSaveChance(progress.getCombatLevel())) {
-            event.setConsumeItem(false);
+        ItemStack consumable = event.getConsumable();
+        if (consumable == null || consumable.getType().isAir()) {
+            return;
         }
+
+        if (ThreadLocalRandom.current().nextDouble() >= plugin.archerArrowSaveChance(progress.getCombatLevel())) {
+            return;
+        }
+
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.35f);
+            return;
+        }
+
+        ItemStack refund = consumable.asOne();
+        Bukkit.getScheduler().runTask(plugin, () -> player.getInventory().addItem(refund));
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.35f);
     }
 
     @EventHandler(ignoreCancelled = true)
