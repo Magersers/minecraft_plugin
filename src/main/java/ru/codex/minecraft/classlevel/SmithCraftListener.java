@@ -104,7 +104,7 @@ public class SmithCraftListener implements Listener {
         }
 
         if (!target.isSimilar(crafted)) {
-            return false;
+            return true;
         }
 
         int max = target.getMaxStackSize();
