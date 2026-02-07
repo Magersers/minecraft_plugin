@@ -1,6 +1,7 @@
 package ru.codex.minecraft.classlevel;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -45,6 +46,7 @@ public class ClassAdminCommand implements CommandExecutor, TabCompleter {
         plugin.getDataManager().save();
 
         target.sendMessage("§cВаш класс был сброшен администратором. Выберите новый класс.");
+        target.playSound(target.getLocation(), Sound.BLOCK_ANVIL_USE, 0.9f, 0.75f);
         target.openInventory(ClassSelectionListener.createClassMenu());
         sender.sendMessage("§aКласс игрока §e" + target.getName() + " §aуспешно сброшен.");
         return true;

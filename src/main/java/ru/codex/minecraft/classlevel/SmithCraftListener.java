@@ -1,6 +1,7 @@
 package ru.codex.minecraft.classlevel;
 
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -122,6 +123,7 @@ public class SmithCraftListener implements Listener {
                 applyRandomEnchants(enchanted, enchantCount);
                 event.setCurrentItem(enchanted);
                 player.sendMessage("§dКузнец: предмет получил §e" + enchantCount + " §dслучайных зачарований случайного уровня.");
+                player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.9f, 1.1f);
             }
         }
     }
@@ -139,6 +141,7 @@ public class SmithCraftListener implements Listener {
                 && random.nextDouble() < plugin.crafterFreeCraftChance(progress.getLevel())) {
             refundCraftIngredients(player, matrix, 1.0);
             player.sendMessage("§6Крафтер: бесплатный крафт! Ресурсы полностью возвращены.");
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.35f);
             return;
         }
 
@@ -147,6 +150,7 @@ public class SmithCraftListener implements Listener {
             int refunded = refundCraftIngredients(player, matrix, maxRefundPortion);
             if (refunded > 0) {
                 player.sendMessage("§bКрафтер: вернулась часть ресурсов (до " + (int) Math.round(maxRefundPortion * 100.0) + "%).");
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.15f);
             }
         }
     }

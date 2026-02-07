@@ -1,6 +1,7 @@
 package ru.codex.minecraft.classlevel;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -123,6 +124,7 @@ public class ClassLevelPlugin extends JavaPlugin {
 
         if (progress.getLevel() > oldLevel) {
             player.sendMessage("§aКласс §e" + expectedClass.displayName() + " §aулучшен до уровня §e" + progress.getLevel() + "§a!");
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
             applyClassEffects(player);
             dataManager.save();
         }
