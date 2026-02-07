@@ -52,7 +52,7 @@ public class SmithCraftListener implements Listener {
             return;
         }
 
-        if (!isRealCraft(event)) {
+        if (!isRealCraft(event, player, crafted)) {
             return;
         }
 
@@ -67,24 +67,47 @@ public class SmithCraftListener implements Listener {
         }
     }
 
-    private boolean isRealCraft(CraftItemEvent event) {
-        ClickType click = event.getClick();
-        if (click == ClickType.NUMBER_KEY || click == ClickType.SWAP_OFFHAND) {
+    private boolean isRealCraft(CraftItemEvent event, Player player, ItemStack crafted) {
+        if (event.getRecipe() == null) {
             return false;
         }
 
         InventoryAction action = event.getAction();
         if (action == InventoryAction.NOTHING
-                || action == InventoryAction.HOTBAR_SWAP
-                || action == InventoryAction.HOTBAR_MOVE_AND_READD
-                || action == InventoryAction.DROP_ALL_SLOT
-                || action == InventoryAction.DROP_ONE_SLOT
                 || action == InventoryAction.CLONE_STACK
                 || action == InventoryAction.UNKNOWN) {
             return false;
         }
 
-        return event.getRecipe() != null;
+        ClickType click = event.getClick();
+        if (click == ClickType.NUMBER_KEY) {
+            int hotbarButton = event.getHotbarButton();
+            if (hotbarButton < 0 || hotbarButton > 8) {
+                return false;
+            }
+            ItemStack hotbarItem = player.getInventory().getItem(hotbarButton);
+            return canStackOrPlace(hotbarItem, crafted);
+        }
+
+        if (click == ClickType.SWAP_OFFHAND) {
+            ItemStack offhand = player.getInventory().getItemInOffHand();
+            return canStackOrPlace(offhand, crafted);
+        }
+
+        return true;
+    }
+
+    private boolean canStackOrPlace(ItemStack target, ItemStack crafted) {
+        if (target == null || target.getType().isAir()) {
+            return true;
+        }
+
+        if (!target.isSimilar(crafted)) {
+            return false;
+        }
+
+        int max = target.getMaxStackSize();
+        return target.getAmount() + crafted.getAmount() <= max;
     }
 
     private void processBlacksmithCraft(CraftItemEvent event, Player player, PlayerProgress progress, ItemStack crafted) {
@@ -107,7 +130,7 @@ public class SmithCraftListener implements Listener {
         plugin.giveClassXp(player, crafterCraftXp(crafted.getType()), PlayerClass.CRAFTER);
 
         ItemStack[] matrix = event.getInventory().getMatrix();
-        if (!isCrafterRefundAllowed(crafted.getType(), matrix)) {
+        if (!isCrafterRefundAllowed(crafted.getType())) {
             return;
         }
 
@@ -176,26 +199,8 @@ public class SmithCraftListener implements Listener {
         return refundCount;
     }
 
-    private boolean isCrafterRefundAllowed(Material result, ItemStack[] matrix) {
-        if (isCompactingMaterial(result) || CRAFTER_REFUND_EXCLUDED.contains(result)) {
-            return false;
-        }
-
-        if (matrix == null) {
-            return true;
-        }
-
-        for (ItemStack ingredient : matrix) {
-            if (ingredient == null || ingredient.getType().isAir()) {
-                continue;
-            }
-            Material type = ingredient.getType();
-            if (isCompactingMaterial(type) || CRAFTER_REFUND_EXCLUDED.contains(type)) {
-                return false;
-            }
-        }
-
-        return true;
+    private boolean isCrafterRefundAllowed(Material result) {
+        return !isCompactingMaterial(result) && !CRAFTER_REFUND_EXCLUDED.contains(result);
     }
 
     private boolean isCompactingMaterial(Material material) {
