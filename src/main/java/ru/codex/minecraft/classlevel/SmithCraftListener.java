@@ -9,13 +9,14 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class SmithCraftListener implements Listener {
-    private static final Set<Material> CRAFTER_FREE_CRAFT_EXCLUDED = EnumSet.of(
+    private static final Set<Material> CRAFTER_REFUND_EXCLUDED = EnumSet.of(
             Material.IRON_INGOT,
             Material.GOLD_INGOT,
             Material.COPPER_INGOT,
@@ -79,62 +80,119 @@ public class SmithCraftListener implements Listener {
     private void processCrafterCraft(CraftItemEvent event, Player player, PlayerProgress progress, ItemStack crafted) {
         plugin.giveClassXp(player, crafterCraftXp(crafted.getType()), PlayerClass.CRAFTER);
 
+        ItemStack[] matrix = event.getInventory().getMatrix();
+        if (!isCrafterRefundAllowed(crafted.getType(), matrix)) {
+            return;
+        }
+
         ThreadLocalRandom random = ThreadLocalRandom.current();
         if (plugin.crafterFreeCraftChance(progress.getLevel()) > 0
-                && isFreeCraftAllowed(crafted.getType())
                 && random.nextDouble() < plugin.crafterFreeCraftChance(progress.getLevel())) {
-            returnOneCraftCost(player, event.getInventory().getMatrix());
+            refundCraftIngredients(player, matrix, 1.0);
             player.sendMessage("§6Крафтер: бесплатный крафт! Ресурсы полностью возвращены.");
             return;
         }
 
         if (random.nextDouble() < plugin.crafterResourceReturnChance(progress.getLevel())) {
-            returnOneCraftCost(player, event.getInventory().getMatrix());
-            player.sendMessage("§bКрафтер: часть ресурсов вернулась после крафта.");
+            double maxRefundPortion = plugin.crafterMaxRefundPortion(progress.getLevel());
+            int refunded = refundCraftIngredients(player, matrix, maxRefundPortion);
+            if (refunded > 0) {
+                player.sendMessage("§bКрафтер: вернулась часть ресурсов (до " + (int) Math.round(maxRefundPortion * 100.0) + "%).");
+            }
         }
     }
 
-    private void returnOneCraftCost(Player player, ItemStack[] matrix) {
+    private int refundCraftIngredients(Player player, ItemStack[] matrix, double portion) {
+        if (matrix == null || portion <= 0.0) {
+            return 0;
+        }
+
+        List<ItemStack> refundableUnits = new ArrayList<>();
+        for (ItemStack ingredient : matrix) {
+            if (ingredient == null || ingredient.getType().isAir()) {
+                continue;
+            }
+
+            ItemStack unit = ingredient.clone();
+            unit.setAmount(1);
+            refundableUnits.add(unit);
+        }
+
+        if (refundableUnits.isEmpty()) {
+            return 0;
+        }
+
+        int total = refundableUnits.size();
+        int refundCount;
+        if (portion >= 1.0) {
+            refundCount = total;
+        } else {
+            double expected = total * portion;
+            refundCount = (int) Math.floor(expected);
+            double fractional = expected - refundCount;
+            if (ThreadLocalRandom.current().nextDouble() < fractional) {
+                refundCount++;
+            }
+            refundCount = Math.min(refundCount, total);
+        }
+
+        if (refundCount <= 0) {
+            return 0;
+        }
+
+        Collections.shuffle(refundableUnits, ThreadLocalRandom.current());
+        for (int i = 0; i < refundCount; i++) {
+            ItemStack refund = refundableUnits.get(i);
+            player.getInventory().addItem(refund).values().forEach(leftover ->
+                    player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+        }
+
+        return refundCount;
+    }
+
+    private boolean isCrafterRefundAllowed(Material result, ItemStack[] matrix) {
+        if (isCompactingMaterial(result) || CRAFTER_REFUND_EXCLUDED.contains(result)) {
+            return false;
+        }
+
         if (matrix == null) {
-            return;
+            return true;
         }
 
         for (ItemStack ingredient : matrix) {
             if (ingredient == null || ingredient.getType().isAir()) {
                 continue;
             }
-
-            ItemStack refund = ingredient.clone();
-            refund.setAmount(1);
-            player.getInventory().addItem(refund).values().forEach(leftover ->
-                    player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+            Material type = ingredient.getType();
+            if (isCompactingMaterial(type) || CRAFTER_REFUND_EXCLUDED.contains(type)) {
+                return false;
+            }
         }
+
+        return true;
     }
 
-    private boolean isFreeCraftAllowed(Material result) {
-        if (result.name().endsWith("_BLOCK")) {
-            return false;
-        }
-        return !CRAFTER_FREE_CRAFT_EXCLUDED.contains(result);
+    private boolean isCompactingMaterial(Material material) {
+        return material.name().endsWith("_BLOCK");
     }
 
     private int crafterCraftXp(Material result) {
         if (result.name().endsWith("_CHESTPLATE") || result.name().endsWith("_LEGGINGS")) {
-            return 95;
+            return 10;
         }
         if (result.name().endsWith("_HELMET") || result.name().endsWith("_BOOTS") || result.name().endsWith("_SWORD")
                 || result.name().endsWith("_AXE") || result.name().endsWith("_PICKAXE")) {
-            return 75;
+            return 8;
         }
         if (result.name().endsWith("_PLATE") || result == Material.PISTON || result == Material.OBSERVER
                 || result == Material.COMPARATOR || result == Material.REPEATER) {
-            return 60;
+            return 6;
         }
         if (result == Material.ENCHANTING_TABLE || result == Material.ANVIL || result == Material.SMITHING_TABLE
                 || result == Material.BREWING_STAND) {
-            return 120;
+            return 12;
         }
-        return 45;
+        return 4;
     }
 
     private int rollEnchantCount(int level) {

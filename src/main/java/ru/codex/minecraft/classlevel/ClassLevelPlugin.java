@@ -169,6 +169,13 @@ public class ClassLevelPlugin extends JavaPlugin {
         return Math.min(0.12 + (Math.max(1, level) - 1) * 0.02, 0.30);
     }
 
+    public double crafterMaxRefundPortion(int level) {
+        if (level >= MAX_LEVEL) {
+            return 1.0;
+        }
+        return Math.min(0.20 + (Math.max(1, level) - 1) * 0.035, 0.50);
+    }
+
     public double crafterFreeCraftChance(int level) {
         return level >= MAX_LEVEL ? 0.08 : 0.0;
     }

@@ -61,6 +61,7 @@ public final class LevelMenuUtil {
 
             if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
                 infoLore.add("§7Шанс возврата ресурсов: §a" + asPercent(plugin.crafterResourceReturnChance(progress.getLevel())));
+                infoLore.add("§7Макс. возврат за крафт: §e" + asPercent(plugin.crafterMaxRefundPortion(progress.getLevel())));
                 infoLore.add("§7Шанс бесплатного крафта: §6" + asPercent(plugin.crafterFreeCraftChance(progress.getLevel())));
             }
         }
@@ -82,12 +83,12 @@ public final class LevelMenuUtil {
             ));
         } else if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
             rewardMeta.setLore(List.of(
-                    "§7Ур. 1: ~12% возврата части ресурсов",
-                    "§7Ур. 5: ~20% возврата части ресурсов",
-                    "§7Ур. 10: ~30% возврата части ресурсов",
-                    "§7Ур. 10: §68% шанс бесплатного крафта",
-                    "§7Бесплатный крафт не работает",
-                    "§7на блоках/слитках/самоцветах (анти-дюп)"
+                    "§7До 9 ур.: возврат части ресурсов",
+                    "§7максимум до §e50% §7за крафт",
+                    "§7На 10 ур.: §aдо 100% возврата",
+                    "§7и §68% шанс бесплатного крафта",
+                    "§7Анти-дюп: отключено для блоков,",
+                    "§7слитков/самоцветов/самородков"
             ));
         } else {
             rewardMeta.setLore(List.of(
