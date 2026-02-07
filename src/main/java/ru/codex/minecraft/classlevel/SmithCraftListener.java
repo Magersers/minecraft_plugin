@@ -5,7 +5,9 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -50,6 +52,10 @@ public class SmithCraftListener implements Listener {
             return;
         }
 
+        if (!isRealCraft(event)) {
+            return;
+        }
+
         PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
         if (progress.getPlayerClass() == PlayerClass.BLACKSMITH) {
             processBlacksmithCraft(event, player, progress, crafted);
@@ -59,6 +65,26 @@ public class SmithCraftListener implements Listener {
         if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
             processCrafterCraft(event, player, progress, crafted);
         }
+    }
+
+    private boolean isRealCraft(CraftItemEvent event) {
+        ClickType click = event.getClick();
+        if (click == ClickType.NUMBER_KEY || click == ClickType.SWAP_OFFHAND) {
+            return false;
+        }
+
+        InventoryAction action = event.getAction();
+        if (action == InventoryAction.NOTHING
+                || action == InventoryAction.HOTBAR_SWAP
+                || action == InventoryAction.HOTBAR_MOVE_AND_READD
+                || action == InventoryAction.DROP_ALL_SLOT
+                || action == InventoryAction.DROP_ONE_SLOT
+                || action == InventoryAction.CLONE_STACK
+                || action == InventoryAction.UNKNOWN) {
+            return false;
+        }
+
+        return event.getRecipe() != null;
     }
 
     private void processBlacksmithCraft(CraftItemEvent event, Player player, PlayerProgress progress, ItemStack crafted) {
