@@ -17,7 +17,7 @@ public class MiningListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         PlayerProgress progress = plugin.getDataManager().getOrCreate(player.getUniqueId());
-        if (progress.getPlayerClass() != PlayerClass.MINER) {
+        if (progress.getPlayerClass() != PlayerClass.HAPPY_MINER) {
             return;
         }
 
@@ -27,6 +27,6 @@ public class MiningListener implements Listener {
             return;
         }
 
-        plugin.giveMiningXp(player, xp);
+        plugin.giveClassXp(player, xp, PlayerClass.HAPPY_MINER);
     }
 }

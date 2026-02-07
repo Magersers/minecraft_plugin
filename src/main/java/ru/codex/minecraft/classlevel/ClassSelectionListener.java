@@ -46,7 +46,17 @@ public class ClassSelectionListener implements Listener {
             return;
         }
 
-        if (event.getCurrentItem() == null || event.getCurrentItem().getType() != Material.IRON_PICKAXE) {
+        if (event.getCurrentItem() == null) {
+            return;
+        }
+
+        PlayerClass selectedClass = switch (event.getCurrentItem().getType()) {
+            case IRON_PICKAXE -> PlayerClass.HAPPY_MINER;
+            case ANVIL -> PlayerClass.BLACKSMITH;
+            default -> null;
+        };
+
+        if (selectedClass == null) {
             return;
         }
 
@@ -56,14 +66,14 @@ public class ClassSelectionListener implements Listener {
             return;
         }
 
-        progress.setPlayerClass(PlayerClass.MINER);
+        progress.setPlayerClass(selectedClass);
         progress.setLevel(1);
         progress.setXp(0);
 
         plugin.applyClassEffects(player);
         plugin.getDataManager().save();
         player.closeInventory();
-        player.sendMessage("§aВы выбрали класс: §eШахтер§a. Откройте меню развития командой §6/lvl§a.");
+        player.sendMessage("§aВы выбрали класс: §e" + selectedClass.displayName() + "§a. Откройте меню развития командой §6/lvl§a.");
     }
 
     @EventHandler
@@ -86,18 +96,31 @@ public class ClassSelectionListener implements Listener {
         Inventory inventory = Bukkit.createInventory(null, 27, CLASS_MENU_TITLE);
 
         ItemStack miner = new ItemStack(Material.IRON_PICKAXE);
-        ItemMeta meta = miner.getItemMeta();
-        meta.setDisplayName("§6Шахтер");
-        meta.setLore(List.of(
-                "§7Постоянный эффект: §aУдача I",
-                "§7Каждые 3 уровня: +1 к Удаче",
+        ItemMeta minerMeta = miner.getItemMeta();
+        minerMeta.setDisplayName("§6Счастливый шахтёр");
+        minerMeta.setLore(List.of(
+                "§7Постоянный эффект: §aВезение I",
+                "§7Каждые 3 уровня: +1 к Везению",
+                "§7На 10 уровне: §bНочное зрение",
                 "§7Прокачка: добывайте руду",
                 "§eНажмите, чтобы выбрать"
         ));
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        miner.setItemMeta(meta);
+        minerMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        miner.setItemMeta(minerMeta);
 
-        inventory.setItem(13, miner);
+        ItemStack smith = new ItemStack(Material.ANVIL);
+        ItemMeta smithMeta = smith.getItemMeta();
+        smithMeta.setDisplayName("§6Кузнец");
+        smithMeta.setLore(List.of(
+                "§75% на 1 ур.: 1 случайное зачарование I",
+                "§7Шанс 3/5/10 зачарований растет с уровнем",
+                "§7Прокачка: крафт брони",
+                "§eНажмите, чтобы выбрать"
+        ));
+        smith.setItemMeta(smithMeta);
+
+        inventory.setItem(11, miner);
+        inventory.setItem(15, smith);
         return inventory;
     }
 }

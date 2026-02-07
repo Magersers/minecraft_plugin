@@ -47,6 +47,9 @@ public class PlayerDataManager {
             String className = playersSection.getString(key + ".class");
             PlayerClass playerClass = null;
             if (className != null) {
+                if (className.equals("MINER")) {
+                    className = "HAPPY_MINER";
+                }
                 try {
                     playerClass = PlayerClass.valueOf(className);
                 } catch (IllegalArgumentException ignored) {

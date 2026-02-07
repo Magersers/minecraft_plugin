@@ -40,8 +40,21 @@ public final class LevelMenuUtil {
                 infoLore.add("§7До следующего уровня: §f" + Math.max(0, next - progress.getXp()));
             }
 
-            int luckLevel = 1 + (progress.getLevel() / 3);
-            infoLore.add("§7Текущая награда: §aУдача " + toRoman(luckLevel));
+            if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
+                int luckLevel = 1 + (progress.getLevel() / 3);
+                infoLore.add("§7Текущая награда: §aВезение " + toRoman(luckLevel));
+                if (progress.getLevel() >= plugin.getMaxLevel()) {
+                    infoLore.add("§7Доп. награда: §bНочное зрение");
+                }
+            }
+
+            if (progress.getPlayerClass() == PlayerClass.BLACKSMITH) {
+                infoLore.add("§7Шансы зачарований:");
+                infoLore.add("§f1 шт: §a" + asPercent(plugin.smithChanceForOneEnchant(progress.getLevel())));
+                infoLore.add("§f3 шт: §a" + asPercent(plugin.smithChanceForThreeEnchants(progress.getLevel())));
+                infoLore.add("§f5 шт: §a" + asPercent(plugin.smithChanceForFiveEnchants(progress.getLevel())));
+                infoLore.add("§f10 шт: §a" + asPercent(plugin.smithChanceForTenEnchants(progress.getLevel())));
+            }
         }
 
         infoMeta.setLore(infoLore);
@@ -51,17 +64,31 @@ public final class LevelMenuUtil {
         ItemStack rewards = new ItemStack(Material.BOOK);
         ItemMeta rewardMeta = rewards.getItemMeta();
         rewardMeta.setDisplayName("§6Награды за уровни");
-        rewardMeta.setLore(List.of(
-                "§7Ур. 1: §aУдача I",
-                "§7Ур. 3: §aУдача II",
-                "§7Ур. 6: §aУдача III",
-                "§7Ур. 9: §aУдача IV",
-                "§7Ур. 10: §eМаксимум развития"
-        ));
+        if (progress.getPlayerClass() == PlayerClass.BLACKSMITH) {
+            rewardMeta.setLore(List.of(
+                    "§7Базово (ур.1): 5% на 1 зачарование",
+                    "§7По уровням постепенно растут",
+                    "§7шансы на 1/3/5/10 зачарований",
+                    "§7Все зачарования выдаются I уровня",
+                    "§7Прокачка: крафт любой брони"
+            ));
+        } else {
+            rewardMeta.setLore(List.of(
+                    "§7Ур. 1: §aВезение I",
+                    "§7Ур. 3: §aВезение II",
+                    "§7Ур. 6: §aВезение III",
+                    "§7Ур. 9: §aВезение IV",
+                    "§7Ур. 10: §bНочное зрение"
+            ));
+        }
         rewards.setItemMeta(rewardMeta);
         inventory.setItem(15, rewards);
 
         return inventory;
+    }
+
+    private static String asPercent(double value) {
+        return String.format("%.2f%%", value * 100.0);
     }
 
     private static String toRoman(int number) {

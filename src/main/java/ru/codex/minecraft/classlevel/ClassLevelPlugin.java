@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class ClassLevelPlugin extends JavaPlugin {
     private static final int MAX_LEVEL = 10;
-    private static final int[] NEXT_LEVEL_REQUIREMENTS = {0, 100, 220, 360, 520, 700, 900, 1130, 1380, 1650};
+    private static final int[] NEXT_LEVEL_REQUIREMENTS = {0, 1000, 2200, 3600, 5200, 7000, 9000, 11300, 13800, 16500};
 
     private PlayerDataManager dataManager;
     private final Map<Material, Integer> oreXp = Map.ofEntries(
@@ -38,13 +38,12 @@ public class ClassLevelPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // config.yml is optional for this plugin; all runtime data is stored in player-data.yml
         dataManager = new PlayerDataManager(this);
         dataManager.load();
 
-        ClassSelectionListener classSelectionListener = new ClassSelectionListener(this);
-        Bukkit.getPluginManager().registerEvents(classSelectionListener, this);
+        Bukkit.getPluginManager().registerEvents(new ClassSelectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MiningListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new SmithCraftListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LevelMenuListener(), this);
 
         LevelMenuCommand levelMenuCommand = new LevelMenuCommand(this);
@@ -86,25 +85,24 @@ public class ClassLevelPlugin extends JavaPlugin {
         return oreXp.getOrDefault(material, 0);
     }
 
-    public void giveMiningXp(Player player, int amount) {
+    public void giveClassXp(Player player, int amount, PlayerClass expectedClass) {
         if (amount <= 0) {
             return;
         }
 
         PlayerProgress progress = dataManager.getOrCreate(player.getUniqueId());
-        if (progress.getPlayerClass() != PlayerClass.MINER || progress.getLevel() >= MAX_LEVEL) {
+        if (progress.getPlayerClass() != expectedClass || progress.getLevel() >= MAX_LEVEL) {
             return;
         }
 
         progress.setXp(progress.getXp() + amount);
         int oldLevel = progress.getLevel();
-
         while (progress.getLevel() < MAX_LEVEL && progress.getXp() >= xpForNextLevel(progress.getLevel())) {
             progress.setLevel(progress.getLevel() + 1);
         }
 
         if (progress.getLevel() > oldLevel) {
-            player.sendMessage("§aКласс Шахтер улучшен до уровня §e" + progress.getLevel() + "§a!");
+            player.sendMessage("§aКласс §e" + expectedClass.displayName() + " §aулучшен до уровня §e" + progress.getLevel() + "§a!");
             applyClassEffects(player);
             dataManager.save();
         }
@@ -113,11 +111,32 @@ public class ClassLevelPlugin extends JavaPlugin {
     public void applyClassEffects(Player player) {
         PlayerProgress progress = dataManager.getOrCreate(player.getUniqueId());
         player.removePotionEffect(PotionEffectType.LUCK);
+        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
 
-        if (progress.getPlayerClass() == PlayerClass.MINER) {
+        if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
             int luckLevel = 1 + (progress.getLevel() / 3);
             int amplifier = Math.max(0, luckLevel - 1);
             player.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, PotionEffect.INFINITE_DURATION, amplifier, true, false, true));
+
+            if (progress.getLevel() >= MAX_LEVEL) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            }
         }
+    }
+
+    public double smithChanceForOneEnchant(int level) {
+        return Math.min(0.05 + (Math.max(1, level) - 1) * 0.01, 0.14);
+    }
+
+    public double smithChanceForThreeEnchants(int level) {
+        return Math.min(Math.max(0, level - 2) * 0.003, 0.024);
+    }
+
+    public double smithChanceForFiveEnchants(int level) {
+        return Math.min(Math.max(0, level - 5) * 0.0015, 0.0075);
+    }
+
+    public double smithChanceForTenEnchants(int level) {
+        return Math.min(Math.max(0, level - 8) * 0.0005, 0.001);
     }
 }

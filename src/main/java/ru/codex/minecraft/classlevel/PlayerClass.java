@@ -1,7 +1,8 @@
 package ru.codex.minecraft.classlevel;
 
 public enum PlayerClass {
-    MINER("Шахтер");
+    HAPPY_MINER("Счастливый шахтёр"),
+    BLACKSMITH("Кузнец");
 
     private final String displayName;
 
