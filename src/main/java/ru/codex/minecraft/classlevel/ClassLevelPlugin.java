@@ -38,7 +38,7 @@ public class ClassLevelPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        // config.yml is optional for this plugin; all runtime data is stored in player-data.yml
         dataManager = new PlayerDataManager(this);
         dataManager.load();
 
@@ -48,8 +48,12 @@ public class ClassLevelPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LevelMenuListener(), this);
 
         LevelMenuCommand levelMenuCommand = new LevelMenuCommand(this);
-        getCommand("lvl").setExecutor(levelMenuCommand);
-        getCommand("lvl").setTabCompleter(levelMenuCommand);
+        if (getCommand("lvl") != null) {
+            getCommand("lvl").setExecutor(levelMenuCommand);
+            getCommand("lvl").setTabCompleter(levelMenuCommand);
+        } else {
+            getLogger().severe("Command /lvl is missing in plugin.yml");
+        }
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             applyClassEffects(player);
@@ -58,7 +62,9 @@ public class ClassLevelPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        dataManager.save();
+        if (dataManager != null) {
+            dataManager.save();
+        }
     }
 
     public PlayerDataManager getDataManager() {
