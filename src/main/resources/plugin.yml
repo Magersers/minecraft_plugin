@@ -1,0 +1,9 @@
+name: ClassLevelPlugin
+version: 1.0.0
+main: ru.codex.minecraft.classlevel.ClassLevelPlugin
+api-version: '1.21'
+authors: [Codex]
+commands:
+  lvl:
+    description: Открыть меню прокачки класса
+    usage: /lvl
