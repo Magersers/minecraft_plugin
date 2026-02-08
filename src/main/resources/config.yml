@@ -6,7 +6,7 @@ combat:
       max: 0.30
     damage-bonus:
       min: 0.10
-      max: 1.00
+      max: 2.50
     proc:
       lightning:
         level5: 0.20

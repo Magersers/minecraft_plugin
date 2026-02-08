@@ -92,6 +92,10 @@ public class ClassLevelPlugin extends JavaPlugin {
         for (Player player : Bukkit.getOnlinePlayers()) {
             applyClassEffects(player);
         }
+
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new ClassLevelPlaceholderExpansion(this).register();
+        }
     }
 
     @Override
