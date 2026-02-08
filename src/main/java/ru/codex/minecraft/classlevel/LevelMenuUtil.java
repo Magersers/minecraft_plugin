@@ -100,11 +100,13 @@ public final class LevelMenuUtil {
                     "§7Бесплатный крафт: §b" + oneDecimal(free) + "%"
             ));
         } else if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
-            int luckLevel = 1 + (progress.getLevel() / 3);
+            int luckLevel = plugin.minerLuckAmplifier(progress.getLevel()) + 1;
+            int nightVisionUnlock = plugin.minerNightVisionUnlockLevel();
+            int hasteUnlock = plugin.minerHasteUnlockLevel();
             rewardMeta.setLore(List.of(
                     "§7Шахтёр: Везение §a" + toRoman(luckLevel),
-                    "§7Ночное зрение: " + (progress.getLevel() >= 5 ? "§aактивно" : "§cс 5 уровня"),
-                    "§7Скорость копания I: " + (progress.getLevel() >= 10 ? "§aактивно" : "§cс 10 уровня")
+                    "§7Ночное зрение: " + (progress.getLevel() >= nightVisionUnlock ? "§aактивно" : "§cс " + nightVisionUnlock + " уровня"),
+                    "§7Скорость копания: " + (progress.getLevel() >= hasteUnlock ? "§aактивно" : "§cс " + hasteUnlock + " уровня")
             ));
         } else {
             rewardMeta.setLore(List.of("§7Выберите класс развития."));
@@ -117,11 +119,14 @@ public final class LevelMenuUtil {
         combatRewardsMeta.setDisplayName("§6Награды боевых классов");
         if (progress.getCombatClass() == CombatClass.WARRIOR) {
             int strength = plugin.warriorStrengthLevel(progress.getCombatLevel());
-            String speedJump = progress.getCombatLevel() >= 5 ? "§aактивно" : "§cс 5 уровня";
+            int speedUnlock = plugin.warriorSpeedUnlockLevel();
+            int jumpUnlock = plugin.warriorJumpUnlockLevel();
+            String speedStatus = progress.getCombatLevel() >= speedUnlock ? "§aактивно" : "§cс " + speedUnlock + " уровня";
+            String jumpStatus = progress.getCombatLevel() >= jumpUnlock ? "§aактивно" : "§cс " + jumpUnlock + " уровня";
             combatRewardsMeta.setLore(List.of(
                     "§7Воин: постоянная §cСила " + toRoman(strength),
-                    "§7Скорость II + Прыгучесть I: " + speedJump,
-                    "§7Максимум: §cСила V",
+                    "§7Скорость: " + speedStatus,
+                    "§7Прыгучесть: " + jumpStatus,
                     "§7Прокачка: убийства в ближнем бою"
             ));
         } else if (progress.getCombatClass() == CombatClass.ARCHER) {
@@ -139,14 +144,20 @@ public final class LevelMenuUtil {
                     "§7Прокачка: убийства дальним оружием"
             ));
         } else if (progress.getCombatClass() == CombatClass.TANK) {
-            String regen = progress.getCombatLevel() >= 10 ? "§dРегенерация II" : progress.getCombatLevel() >= 5 ? "§dРегенерация I" : "§cнет";
-            String resist = progress.getCombatLevel() >= 5 ? "§bСопротивление II" : "§bСопротивление I";
+            int resistLevel = plugin.tankResistanceAmplifier(progress.getCombatLevel()) + 1;
+            int regen1Unlock = plugin.tankRegenLevel1UnlockLevel();
+            int regen2Unlock = plugin.tankRegenLevel2UnlockLevel();
+            String regen = progress.getCombatLevel() >= regen2Unlock
+                    ? "§dРегенерация " + toRoman(plugin.tankRegenLevel2Amplifier() + 1)
+                    : progress.getCombatLevel() >= regen1Unlock
+                    ? "§dРегенерация " + toRoman(plugin.tankRegenLevel1Amplifier() + 1)
+                    : "§cнет";
             combatRewardsMeta.setLore(List.of(
                     "§7Танк: бонус к HP §a+" + oneDecimal(plugin.tankBonusHealth(progress.getCombatLevel()) / 2.0) + " ❤",
-                    "§7Текущие эффекты: " + resist + " §7+ " + regen,
-                    "§7Пороги: 5 ур. -> реген I, 10 ур. -> реген II",
-                    "§7Прогресс по полученному урону",
-                    "§7Прокачка ускорена примерно в 10 раз"
+                    "§7Текущее сопротивление: §b" + toRoman(resistLevel),
+                    "§7Регенерация: " + regen,
+                    "§7Пороги: " + regen1Unlock + " ур. -> реген " + toRoman(plugin.tankRegenLevel1Amplifier() + 1) + ", " + regen2Unlock + " ур. -> реген " + toRoman(plugin.tankRegenLevel2Amplifier() + 1),
+                    "§7Прогресс по полученному урону"
             ));
         } else {
             combatRewardsMeta.setLore(List.of("§7Выберите боевой класс."));

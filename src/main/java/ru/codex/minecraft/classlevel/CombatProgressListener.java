@@ -105,8 +105,8 @@ public class CombatProgressListener implements Listener {
             return;
         }
 
-        int durationTicks = 5 * 20;
-        int amplifier = randomEffect.equals(PotionEffectType.POISON) ? 0 : 4;
+        int durationTicks = plugin.archerDebuffDurationTicks(progress.getCombatLevel());
+        int amplifier = plugin.archerDebuffAmplifier(progress.getCombatLevel());
         target.addPotionEffect(new PotionEffect(randomEffect, durationTicks, amplifier, true, true, true));
         player.playSound(player.getLocation(), Sound.ENTITY_WITCH_CELEBRATE, 0.65f, 1.25f);
     }

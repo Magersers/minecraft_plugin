@@ -1,15 +1,57 @@
 plugin-meta:
   author: Magersers
 
+effects:
+  miner:
+    luck:
+      # Potion amplifier (0 = Luck I)
+      min-amplifier: 0
+      max-amplifier: 3
+    night-vision:
+      unlock-level: 5
+      amplifier: 0
+    haste:
+      unlock-level: 10
+      amplifier: 0
+
+  warrior:
+    strength:
+      # Potion amplifier (0 = Strength I)
+      min-amplifier: 0
+      max-amplifier: 4
+    speed:
+      unlock-level: 5
+      amplifier: 1
+    jump-boost:
+      unlock-level: 5
+      amplifier: 0
+
+  tank:
+    resistance:
+      base-amplifier: 0
+      high-level:
+        unlock-level: 5
+        amplifier: 1
+    regeneration:
+      level1:
+        unlock-level: 5
+        amplifier: 0
+      level2:
+        unlock-level: 10
+        amplifier: 1
+
 combat:
   archer:
     # Linear scaling from level 1 to 10.
     arrow-save-chance:
       min: 0.10
       max: 0.30
+
+    # Bonus damage multiplier by level (2.50 = +250%; total = 350% on max level)
     damage-bonus:
       min: 0.10
       max: 2.50
+
     proc:
       lightning:
         level5: 0.20
@@ -17,6 +59,25 @@ combat:
       debuff:
         level5: 0.20
         level10: 0.50
+
+        # Allowed Bukkit potion names
+        effects:
+          - SLOWNESS
+          - WEAKNESS
+          - POISON
+          - BLINDNESS
+          - WITHER
+          - HUNGER
+
+        # Linear scaling from level 1 to 10
+        duration-seconds:
+          min: 5.0
+          max: 8.0
+
+        # Potion amplifier (1 = II)
+        amplifier:
+          min: 1
+          max: 4
 
   tank:
     # Added directly to GENERIC_MAX_HEALTH (2 HP = 1 heart)

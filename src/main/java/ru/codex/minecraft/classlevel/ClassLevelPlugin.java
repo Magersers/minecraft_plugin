@@ -11,7 +11,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -206,40 +208,41 @@ public class ClassLevelPlugin extends JavaPlugin {
         player.removePotionEffect(PotionEffectType.RESISTANCE);
 
         if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
-            int luckLevel = 1 + (progress.getLevel() / 3);
-            int amplifier = Math.max(0, luckLevel - 1);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, PotionEffect.INFINITE_DURATION, amplifier, true, false, true));
+            int luckAmplifier = minerLuckAmplifier(progress.getLevel());
+            player.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, PotionEffect.INFINITE_DURATION, luckAmplifier, true, false, true));
 
-            if (progress.getLevel() >= 5) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            if (progress.getLevel() >= minerNightVisionUnlockLevel()) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, PotionEffect.INFINITE_DURATION, minerNightVisionAmplifier(), true, false, true));
             }
 
-            if (progress.getLevel() >= MAX_LEVEL) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            if (progress.getLevel() >= minerHasteUnlockLevel()) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, PotionEffect.INFINITE_DURATION, minerHasteAmplifier(), true, false, true));
             }
         }
 
         if (progress.getCombatClass() == CombatClass.WARRIOR) {
-            int strengthLevel = warriorStrengthLevel(progress.getCombatLevel());
-            int amplifier = Math.max(0, strengthLevel - 1);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, PotionEffect.INFINITE_DURATION, amplifier, true, false, true));
+            int strengthAmplifier = warriorStrengthAmplifier(progress.getCombatLevel());
+            player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, PotionEffect.INFINITE_DURATION, strengthAmplifier, true, false, true));
 
-            if (progress.getCombatLevel() >= 5) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, PotionEffect.INFINITE_DURATION, 1, true, false, true));
-                player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            if (progress.getCombatLevel() >= warriorSpeedUnlockLevel()) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, PotionEffect.INFINITE_DURATION, warriorSpeedAmplifier(), true, false, true));
+            }
+
+            if (progress.getCombatLevel() >= warriorJumpUnlockLevel()) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, PotionEffect.INFINITE_DURATION, warriorJumpAmplifier(), true, false, true));
             }
         }
 
         if (progress.getCombatClass() == CombatClass.TANK) {
-            int resistanceAmplifier = progress.getCombatLevel() >= 5 ? 1 : 0;
+            int resistanceAmplifier = tankResistanceAmplifier(progress.getCombatLevel());
             player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, PotionEffect.INFINITE_DURATION, resistanceAmplifier, true, false, true));
 
-            if (progress.getCombatLevel() >= 5) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            if (progress.getCombatLevel() >= tankRegenLevel1UnlockLevel()) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, tankRegenLevel1Amplifier(), true, false, true));
             }
 
-            if (progress.getCombatLevel() >= 10) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, 1, true, false, true));
+            if (progress.getCombatLevel() >= tankRegenLevel2UnlockLevel()) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, tankRegenLevel2Amplifier(), true, false, true));
             }
         }
 
@@ -280,9 +283,77 @@ public class ClassLevelPlugin extends JavaPlugin {
         }
     }
 
+    public int minerLuckAmplifier(int mainLevel) {
+        int level = Math.max(1, mainLevel);
+        int min = getConfig().getInt("effects.miner.luck.min-amplifier", 0);
+        int max = getConfig().getInt("effects.miner.luck.max-amplifier", 3);
+        return linearIntByLevel(level, min, max);
+    }
+
+    public int minerNightVisionUnlockLevel() {
+        return Math.max(1, getConfig().getInt("effects.miner.night-vision.unlock-level", 5));
+    }
+
+    public int minerNightVisionAmplifier() {
+        return Math.max(0, getConfig().getInt("effects.miner.night-vision.amplifier", 0));
+    }
+
+    public int minerHasteUnlockLevel() {
+        return Math.max(1, getConfig().getInt("effects.miner.haste.unlock-level", 10));
+    }
+
+    public int minerHasteAmplifier() {
+        return Math.max(0, getConfig().getInt("effects.miner.haste.amplifier", 0));
+    }
+
+    public int warriorStrengthAmplifier(int combatLevel) {
+        int level = Math.max(1, combatLevel);
+        int min = getConfig().getInt("effects.warrior.strength.min-amplifier", 0);
+        int max = getConfig().getInt("effects.warrior.strength.max-amplifier", 4);
+        return linearIntByLevel(level, min, max);
+    }
+
     public int warriorStrengthLevel(int combatLevel) {
-        int lvl = 1 + (Math.max(1, combatLevel) - 1) / 2;
-        return Math.min(5, lvl);
+        return warriorStrengthAmplifier(combatLevel) + 1;
+    }
+
+    public int warriorSpeedUnlockLevel() {
+        return Math.max(1, getConfig().getInt("effects.warrior.speed.unlock-level", 5));
+    }
+
+    public int warriorSpeedAmplifier() {
+        return Math.max(0, getConfig().getInt("effects.warrior.speed.amplifier", 1));
+    }
+
+    public int warriorJumpUnlockLevel() {
+        return Math.max(1, getConfig().getInt("effects.warrior.jump-boost.unlock-level", 5));
+    }
+
+    public int warriorJumpAmplifier() {
+        return Math.max(0, getConfig().getInt("effects.warrior.jump-boost.amplifier", 0));
+    }
+
+    public int tankResistanceAmplifier(int combatLevel) {
+        int base = Math.max(0, getConfig().getInt("effects.tank.resistance.base-amplifier", 0));
+        int highUnlock = Math.max(1, getConfig().getInt("effects.tank.resistance.high-level.unlock-level", 5));
+        int highAmplifier = Math.max(base, getConfig().getInt("effects.tank.resistance.high-level.amplifier", 1));
+        return combatLevel >= highUnlock ? highAmplifier : base;
+    }
+
+    public int tankRegenLevel1UnlockLevel() {
+        return Math.max(1, getConfig().getInt("effects.tank.regeneration.level1.unlock-level", 5));
+    }
+
+    public int tankRegenLevel1Amplifier() {
+        return Math.max(0, getConfig().getInt("effects.tank.regeneration.level1.amplifier", 0));
+    }
+
+    public int tankRegenLevel2UnlockLevel() {
+        return Math.max(1, getConfig().getInt("effects.tank.regeneration.level2.unlock-level", 10));
+    }
+
+    public int tankRegenLevel2Amplifier() {
+        return Math.max(0, getConfig().getInt("effects.tank.regeneration.level2.amplifier", 1));
     }
 
     public double archerArrowSaveChance(int combatLevel) {
@@ -295,7 +366,7 @@ public class ClassLevelPlugin extends JavaPlugin {
     public double archerDamageBonus(int combatLevel) {
         int lvl = Math.max(1, combatLevel);
         double min = getConfig().getDouble("combat.archer.damage-bonus.min", 0.10);
-        double max = getConfig().getDouble("combat.archer.damage-bonus.max", 1.00);
+        double max = getConfig().getDouble("combat.archer.damage-bonus.max", 2.50);
         return linearByLevel(lvl, min, max);
     }
 
@@ -320,6 +391,20 @@ public class ClassLevelPlugin extends JavaPlugin {
     }
 
     public List<PotionEffectType> archerNegativeEffects() {
+        List<String> configured = getConfig().getStringList("combat.archer.proc.debuff.effects");
+        if (!configured.isEmpty()) {
+            List<PotionEffectType> result = new ArrayList<>();
+            for (String effectName : configured) {
+                PotionEffectType effect = PotionEffectType.getByName(effectName.toUpperCase(Locale.ROOT));
+                if (effect != null) {
+                    result.add(effect);
+                }
+            }
+            if (!result.isEmpty()) {
+                return result;
+            }
+        }
+
         return List.of(
                 PotionEffectType.SLOWNESS,
                 PotionEffectType.WEAKNESS,
@@ -328,6 +413,20 @@ public class ClassLevelPlugin extends JavaPlugin {
                 PotionEffectType.WITHER,
                 PotionEffectType.HUNGER
         );
+    }
+
+    public int archerDebuffDurationTicks(int combatLevel) {
+        int level = Math.max(1, combatLevel);
+        double min = getConfig().getDouble("combat.archer.proc.debuff.duration-seconds.min", 5.0);
+        double max = getConfig().getDouble("combat.archer.proc.debuff.duration-seconds.max", 8.0);
+        return Math.max(20, (int) Math.round(linearByLevel(level, min, max) * 20.0));
+    }
+
+    public int archerDebuffAmplifier(int combatLevel) {
+        int level = Math.max(1, combatLevel);
+        int min = getConfig().getInt("combat.archer.proc.debuff.amplifier.min", 1);
+        int max = getConfig().getInt("combat.archer.proc.debuff.amplifier.max", 4);
+        return linearIntByLevel(level, min, max);
     }
 
     public double tankBonusHealth(int combatLevel) {
@@ -343,6 +442,10 @@ public class ClassLevelPlugin extends JavaPlugin {
         }
         double step = (max - min) / (MAX_LEVEL - 1);
         return min + (level - 1) * step;
+    }
+
+    private int linearIntByLevel(int level, int min, int max) {
+        return (int) Math.round(linearByLevel(level, min, max));
     }
 
     public double smithChanceForOneEnchant(int level) {
