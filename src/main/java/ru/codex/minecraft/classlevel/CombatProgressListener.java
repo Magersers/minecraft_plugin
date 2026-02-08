@@ -16,6 +16,8 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.Map;
 import java.util.UUID;
@@ -80,6 +82,41 @@ public class CombatProgressListener implements Listener {
 
         double bonus = plugin.archerDamageBonus(progress.getCombatLevel());
         event.setDamage(event.getDamage() * (1.0 + bonus));
+
+        if (event.getEntity() instanceof LivingEntity target) {
+            rollArcherHitEffects(player, progress, target);
+        }
+    }
+
+    private void rollArcherHitEffects(Player player, PlayerProgress progress, LivingEntity target) {
+        double lightningChance = plugin.archerLightningChance(progress.getCombatLevel());
+        if (lightningChance > 0 && ThreadLocalRandom.current().nextDouble() < lightningChance) {
+            target.getWorld().strikeLightning(target.getLocation());
+            player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.6f, 1.4f);
+        }
+
+        double debuffChance = plugin.archerDebuffChance(progress.getCombatLevel());
+        if (debuffChance <= 0 || ThreadLocalRandom.current().nextDouble() >= debuffChance) {
+            return;
+        }
+
+        PotionEffectType randomEffect = randomNegativeEffect();
+        if (randomEffect == null) {
+            return;
+        }
+
+        int durationTicks = 5 * 20;
+        int amplifier = randomEffect.equals(PotionEffectType.POISON) ? 0 : 4;
+        target.addPotionEffect(new PotionEffect(randomEffect, durationTicks, amplifier, true, true, true));
+        player.playSound(player.getLocation(), Sound.ENTITY_WITCH_CELEBRATE, 0.65f, 1.25f);
+    }
+
+    private PotionEffectType randomNegativeEffect() {
+        var effects = plugin.archerNegativeEffects();
+        if (effects.isEmpty()) {
+            return null;
+        }
+        return effects.get(ThreadLocalRandom.current().nextInt(effects.size()));
     }
 
     @EventHandler(ignoreCancelled = true)

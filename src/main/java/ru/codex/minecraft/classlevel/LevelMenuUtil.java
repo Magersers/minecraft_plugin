@@ -108,6 +108,7 @@ public final class LevelMenuUtil {
             int strength = plugin.warriorStrengthLevel(progress.getCombatLevel());
             combatRewardsMeta.setLore(List.of(
                     "§7Воин: постоянная §cСила " + toRoman(strength),
+                    "§7С 5 ур.: §bСкорость II §7+ §bПрыгучесть I",
                     "§7Максимум: §cСила V",
                     "§7Прокачка: убийства в ближнем бою"
             ));
@@ -117,11 +118,15 @@ public final class LevelMenuUtil {
             combatRewardsMeta.setLore(List.of(
                     "§7Бонус урона из лука: §a+" + oneDecimal(dmg) + "%",
                     "§7Шанс не потратить стрелу: §e" + oneDecimal(save) + "%",
+                    "§7С 5 ур.: §e10% §7шанс молнии при попадании",
+                    "§7С 10 ур.: §e10% §7шанс дебаффа на 5 сек",
                     "§7Прокачка: убийства дальним оружием"
             ));
         } else if (progress.getCombatClass() == CombatClass.TANK) {
             combatRewardsMeta.setLore(List.of(
                     "§7Танк: бонус к HP §a+" + oneDecimal(plugin.tankBonusHealth(progress.getCombatLevel()) / 2.0) + " ❤",
+                    "§75 ур.: §dРегенерация I",
+                    "§710 ур.: §dРегенерация I §7+ §bСопротивление I",
                     "§7Прогресс по полученному урону",
                     "§7Прокачка ускорена примерно в 10 раз"
             ));

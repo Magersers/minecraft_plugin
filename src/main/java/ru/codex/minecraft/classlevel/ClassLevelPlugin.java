@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -71,6 +72,14 @@ public class ClassLevelPlugin extends JavaPlugin {
             getCommand("resetclass").setTabCompleter(classAdminCommand);
         } else {
             getLogger().severe("Command /resetclass is missing in plugin.yml");
+        }
+
+        AdminLevelCommand adminLevelCommand = new AdminLevelCommand(this);
+        if (getCommand("givelevel") != null) {
+            getCommand("givelevel").setExecutor(adminLevelCommand);
+            getCommand("givelevel").setTabCompleter(adminLevelCommand);
+        } else {
+            getLogger().severe("Command /givelevel is missing in plugin.yml");
         }
 
         effectRefreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
@@ -186,6 +195,10 @@ public class ClassLevelPlugin extends JavaPlugin {
         player.removePotionEffect(PotionEffectType.NIGHT_VISION);
         player.removePotionEffect(PotionEffectType.HASTE);
         player.removePotionEffect(PotionEffectType.STRENGTH);
+        player.removePotionEffect(PotionEffectType.SPEED);
+        player.removePotionEffect(PotionEffectType.JUMP_BOOST);
+        player.removePotionEffect(PotionEffectType.REGENERATION);
+        player.removePotionEffect(PotionEffectType.RESISTANCE);
 
         if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
             int luckLevel = 1 + (progress.getLevel() / 3);
@@ -205,6 +218,21 @@ public class ClassLevelPlugin extends JavaPlugin {
             int strengthLevel = warriorStrengthLevel(progress.getCombatLevel());
             int amplifier = Math.max(0, strengthLevel - 1);
             player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, PotionEffect.INFINITE_DURATION, amplifier, true, false, true));
+
+            if (progress.getCombatLevel() >= 5) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, PotionEffect.INFINITE_DURATION, 1, true, false, true));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            }
+        }
+
+        if (progress.getCombatClass() == CombatClass.TANK) {
+            if (progress.getCombatLevel() >= 5) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            }
+
+            if (progress.getCombatLevel() >= 10) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+            }
         }
 
         applyTankHealth(player, progress);
@@ -255,6 +283,25 @@ public class ClassLevelPlugin extends JavaPlugin {
 
     public double archerDamageBonus(int combatLevel) {
         return Math.min(0.06 + (Math.max(1, combatLevel) - 1) * 0.022, 0.26);
+    }
+
+    public double archerLightningChance(int combatLevel) {
+        return combatLevel >= 5 ? 0.10 : 0.0;
+    }
+
+    public double archerDebuffChance(int combatLevel) {
+        return combatLevel >= 10 ? 0.10 : 0.0;
+    }
+
+    public List<PotionEffectType> archerNegativeEffects() {
+        return List.of(
+                PotionEffectType.SLOWNESS,
+                PotionEffectType.WEAKNESS,
+                PotionEffectType.POISON,
+                PotionEffectType.BLINDNESS,
+                PotionEffectType.WITHER,
+                PotionEffectType.HUNGER
+        );
     }
 
     public double tankBonusHealth(int combatLevel) {
