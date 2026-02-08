@@ -2,7 +2,7 @@ name: ClassLevelPlugin
 version: 1.0.0
 main: ru.codex.minecraft.classlevel.ClassLevelPlugin
 api-version: '1.21'
-authors: [Codex]
+authors: [Magersers]
 softdepend: [PlaceholderAPI]
 commands:
   lvl:

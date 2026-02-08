@@ -1,3 +1,6 @@
+plugin-meta:
+  author: Magersers
+
 combat:
   archer:
     # Linear scaling from level 1 to 10.
