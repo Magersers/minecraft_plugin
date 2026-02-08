@@ -116,7 +116,7 @@ public class SmithCraftListener implements Listener {
             plugin.giveClassXp(player, armorCraftXp(crafted.getType()), PlayerClass.BLACKSMITH);
         }
 
-        if (isWeaponOrArmor(crafted.getType())) {
+        if (isWeaponArmorOrTool(crafted.getType())) {
             int enchantCount = rollEnchantCount(progress.getLevel());
             if (enchantCount > 0) {
                 ItemStack enchanted = crafted.clone();
@@ -269,12 +269,16 @@ public class SmithCraftListener implements Listener {
         }
     }
 
-    private boolean isWeaponOrArmor(Material material) {
+    private boolean isWeaponArmorOrTool(Material material) {
         return isArmor(material)
                 || material.name().endsWith("_SWORD")
                 || material.name().endsWith("_AXE")
+                || material.name().endsWith("_PICKAXE")
+                || material.name().endsWith("_SHOVEL")
+                || material.name().endsWith("_HOE")
                 || material == Material.BOW
                 || material == Material.CROSSBOW
+                || material == Material.TRIDENT
                 || material == Material.MACE;
     }
 

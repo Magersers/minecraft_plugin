@@ -78,22 +78,33 @@ public final class LevelMenuUtil {
         ItemMeta rewardMeta = rewards.getItemMeta();
         rewardMeta.setDisplayName("§6Награды классов");
         if (progress.getPlayerClass() == PlayerClass.BLACKSMITH) {
+            double one = plugin.smithChanceForOneEnchant(progress.getLevel()) * 100.0;
+            double three = plugin.smithChanceForThreeEnchants(progress.getLevel()) * 100.0;
+            double five = plugin.smithChanceForFiveEnchants(progress.getLevel()) * 100.0;
+            double ten = plugin.smithChanceForTenEnchants(progress.getLevel()) * 100.0;
             rewardMeta.setLore(List.of(
-                    "§7Кузнец: шанс на 1/3/5/10 зачарований",
-                    "§7растёт до 35%/15%/6%/2%",
+                    "§7Кузнец: случайные зачары на броню,",
+                    "§7оружие §fи §7инструменты.",
+                    "§7Текущие шансы: §e1 §7= §a" + oneDecimal(one) + "%",
+                    "§e3 §7= §a" + oneDecimal(three) + "% §8| §e5 §7= §a" + oneDecimal(five) + "% §8| §e10 §7= §a" + oneDecimal(ten) + "%",
                     "§7Прокачка: крафт брони"
             ));
         } else if (progress.getPlayerClass() == PlayerClass.CRAFTER) {
+            double refundChance = plugin.crafterResourceReturnChance(progress.getLevel()) * 100.0;
+            double refundMax = plugin.crafterMaxRefundPortion(progress.getLevel()) * 100.0;
+            double free = plugin.crafterFreeCraftChance(progress.getLevel()) * 100.0;
             rewardMeta.setLore(List.of(
                     "§7Крафтер: возврат части ресурсов",
-                    "§7до 50%, на 10 ур. до 100%",
-                    "§7и 8% шанс бесплатного крафта"
+                    "§7Шанс возврата: §b" + oneDecimal(refundChance) + "%",
+                    "§7Макс. возврат: §bдо " + oneDecimal(refundMax) + "%",
+                    "§7Бесплатный крафт: §b" + oneDecimal(free) + "%"
             ));
         } else if (progress.getPlayerClass() == PlayerClass.HAPPY_MINER) {
+            int luckLevel = 1 + (progress.getLevel() / 3);
             rewardMeta.setLore(List.of(
-                    "§7Шахтёр: рост эффекта Везения",
-                    "§7на 5 ур. Ночное зрение",
-                    "§7на 10 ур. Скорость копания I"
+                    "§7Шахтёр: Везение §a" + toRoman(luckLevel),
+                    "§7Ночное зрение: " + (progress.getLevel() >= 5 ? "§aактивно" : "§cс 5 уровня"),
+                    "§7Скорость копания I: " + (progress.getLevel() >= 10 ? "§aактивно" : "§cс 10 уровня")
             ));
         } else {
             rewardMeta.setLore(List.of("§7Выберите класс развития."));
@@ -106,9 +117,10 @@ public final class LevelMenuUtil {
         combatRewardsMeta.setDisplayName("§6Награды боевых классов");
         if (progress.getCombatClass() == CombatClass.WARRIOR) {
             int strength = plugin.warriorStrengthLevel(progress.getCombatLevel());
+            String speedJump = progress.getCombatLevel() >= 5 ? "§aактивно" : "§cс 5 уровня";
             combatRewardsMeta.setLore(List.of(
                     "§7Воин: постоянная §cСила " + toRoman(strength),
-                    "§7С 5 ур.: §bСкорость II §7+ §bПрыгучесть I",
+                    "§7Скорость II + Прыгучесть I: " + speedJump,
                     "§7Максимум: §cСила V",
                     "§7Прокачка: убийства в ближнем бою"
             ));
@@ -122,16 +134,17 @@ public final class LevelMenuUtil {
             combatRewardsMeta.setLore(List.of(
                     "§7Бонус урона из лука: §a+" + oneDecimal(dmg) + "%",
                     "§7Шанс не потратить стрелу: §e" + oneDecimal(save) + "%",
-                    "§7С 5 ур.: §e" + oneDecimal(lightning5) + "% §7молния, §e" + oneDecimal(debuff5) + "% §7дебафф",
-                    "§7С 10 ур.: §e" + oneDecimal(lightning10) + "% §7молния, §e" + oneDecimal(debuff10) + "% §7дебафф",
+                    "§75+ ур.: §e" + oneDecimal(lightning5) + "% §7молния, §e" + oneDecimal(debuff5) + "% §7дебафф",
+                    "§710 ур.: §e" + oneDecimal(lightning10) + "% §7молния, §e" + oneDecimal(debuff10) + "% §7дебафф",
                     "§7Прокачка: убийства дальним оружием"
             ));
         } else if (progress.getCombatClass() == CombatClass.TANK) {
+            String regen = progress.getCombatLevel() >= 10 ? "§dРегенерация II" : progress.getCombatLevel() >= 5 ? "§dРегенерация I" : "§cнет";
+            String resist = progress.getCombatLevel() >= 5 ? "§bСопротивление II" : "§bСопротивление I";
             combatRewardsMeta.setLore(List.of(
                     "§7Танк: бонус к HP §a+" + oneDecimal(plugin.tankBonusHealth(progress.getCombatLevel()) / 2.0) + " ❤",
-                    "§71 ур.: §bСопротивление I",
-                    "§75 ур.: §bСопротивление II §7+ §dРегенерация I",
-                    "§710 ур.: §bСопротивление II §7+ §dРегенерация II",
+                    "§7Текущие эффекты: " + resist + " §7+ " + regen,
+                    "§7Пороги: 5 ур. -> реген I, 10 ур. -> реген II",
                     "§7Прогресс по полученному урону",
                     "§7Прокачка ускорена примерно в 10 раз"
             ));
