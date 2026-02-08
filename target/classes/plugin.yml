@@ -12,7 +12,16 @@ commands:
     description: Сбросить класс игрока
     usage: /resetclass <игрок>
     permission: classlevel.admin.reset
+
+  givelevel:
+    description: Выдать или установить уровень игроку
+    usage: /givelevel <игрок> <main|combat> <set|add> <число>
+    permission: classlevel.admin.givelevel
 permissions:
   classlevel.admin.reset:
     description: Позволяет сбрасывать класс игрокам
+    default: op
+
+  classlevel.admin.givelevel:
+    description: Позволяет выдавать уровни игрокам
     default: op

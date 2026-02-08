@@ -1,6 +1,9 @@
+/home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/AdminLevelCommand.java
 /home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/ClassAdminCommand.java
 /home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/ClassLevelPlugin.java
 /home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/ClassSelectionListener.java
+/home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/CombatClass.java
+/home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/CombatProgressListener.java
 /home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/LevelMenuCommand.java
 /home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/LevelMenuListener.java
 /home/daniil/code/mine/class/src/main/java/ru/codex/minecraft/classlevel/LevelMenuUtil.java
