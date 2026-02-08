@@ -49,6 +49,7 @@ public class ClassLevelPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         dataManager = new PlayerDataManager(this);
         dataManager.load();
 
@@ -226,12 +227,15 @@ public class ClassLevelPlugin extends JavaPlugin {
         }
 
         if (progress.getCombatClass() == CombatClass.TANK) {
+            int resistanceAmplifier = progress.getCombatLevel() >= 5 ? 1 : 0;
+            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, PotionEffect.INFINITE_DURATION, resistanceAmplifier, true, false, true));
+
             if (progress.getCombatLevel() >= 5) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, 0, true, false, true));
             }
 
             if (progress.getCombatLevel() >= 10) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, PotionEffect.INFINITE_DURATION, 0, true, false, true));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, PotionEffect.INFINITE_DURATION, 1, true, false, true));
             }
         }
 
@@ -278,19 +282,37 @@ public class ClassLevelPlugin extends JavaPlugin {
     }
 
     public double archerArrowSaveChance(int combatLevel) {
-        return Math.min(0.10 + (Math.max(1, combatLevel) - 1) * 0.018, 0.26);
+        int lvl = Math.max(1, combatLevel);
+        double min = getConfig().getDouble("combat.archer.arrow-save-chance.min", 0.10);
+        double max = getConfig().getDouble("combat.archer.arrow-save-chance.max", 0.30);
+        return linearByLevel(lvl, min, max);
     }
 
     public double archerDamageBonus(int combatLevel) {
-        return Math.min(0.06 + (Math.max(1, combatLevel) - 1) * 0.022, 0.26);
+        int lvl = Math.max(1, combatLevel);
+        double min = getConfig().getDouble("combat.archer.damage-bonus.min", 0.10);
+        double max = getConfig().getDouble("combat.archer.damage-bonus.max", 1.00);
+        return linearByLevel(lvl, min, max);
     }
 
     public double archerLightningChance(int combatLevel) {
-        return combatLevel >= 5 ? 0.10 : 0.0;
+        if (combatLevel >= 10) {
+            return getConfig().getDouble("combat.archer.proc.lightning.level10", 0.30);
+        }
+        if (combatLevel >= 5) {
+            return getConfig().getDouble("combat.archer.proc.lightning.level5", 0.20);
+        }
+        return 0.0;
     }
 
     public double archerDebuffChance(int combatLevel) {
-        return combatLevel >= 10 ? 0.10 : 0.0;
+        if (combatLevel >= 10) {
+            return getConfig().getDouble("combat.archer.proc.debuff.level10", 0.50);
+        }
+        if (combatLevel >= 5) {
+            return getConfig().getDouble("combat.archer.proc.debuff.level5", 0.20);
+        }
+        return 0.0;
     }
 
     public List<PotionEffectType> archerNegativeEffects() {
@@ -305,7 +327,18 @@ public class ClassLevelPlugin extends JavaPlugin {
     }
 
     public double tankBonusHealth(int combatLevel) {
-        return 2.0 + (Math.max(1, combatLevel) - 1) * 1.6;
+        int lvl = Math.max(1, combatLevel);
+        double base = getConfig().getDouble("combat.tank.health-bonus.base", 4.0);
+        double perLevel = getConfig().getDouble("combat.tank.health-bonus.per-level", 2.15);
+        return base + (lvl - 1) * perLevel;
+    }
+
+    private double linearByLevel(int level, double min, double max) {
+        if (level >= MAX_LEVEL) {
+            return max;
+        }
+        double step = (max - min) / (MAX_LEVEL - 1);
+        return min + (level - 1) * step;
     }
 
     public double smithChanceForOneEnchant(int level) {

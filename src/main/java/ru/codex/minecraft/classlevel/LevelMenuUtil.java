@@ -115,18 +115,23 @@ public final class LevelMenuUtil {
         } else if (progress.getCombatClass() == CombatClass.ARCHER) {
             double dmg = plugin.archerDamageBonus(progress.getCombatLevel()) * 100.0;
             double save = plugin.archerArrowSaveChance(progress.getCombatLevel()) * 100.0;
+            double lightning5 = plugin.archerLightningChance(5) * 100.0;
+            double lightning10 = plugin.archerLightningChance(10) * 100.0;
+            double debuff5 = plugin.archerDebuffChance(5) * 100.0;
+            double debuff10 = plugin.archerDebuffChance(10) * 100.0;
             combatRewardsMeta.setLore(List.of(
                     "§7Бонус урона из лука: §a+" + oneDecimal(dmg) + "%",
                     "§7Шанс не потратить стрелу: §e" + oneDecimal(save) + "%",
-                    "§7С 5 ур.: §e10% §7шанс молнии при попадании",
-                    "§7С 10 ур.: §e10% §7шанс дебаффа на 5 сек",
+                    "§7С 5 ур.: §e" + oneDecimal(lightning5) + "% §7молния, §e" + oneDecimal(debuff5) + "% §7дебафф",
+                    "§7С 10 ур.: §e" + oneDecimal(lightning10) + "% §7молния, §e" + oneDecimal(debuff10) + "% §7дебафф",
                     "§7Прокачка: убийства дальним оружием"
             ));
         } else if (progress.getCombatClass() == CombatClass.TANK) {
             combatRewardsMeta.setLore(List.of(
                     "§7Танк: бонус к HP §a+" + oneDecimal(plugin.tankBonusHealth(progress.getCombatLevel()) / 2.0) + " ❤",
-                    "§75 ур.: §dРегенерация I",
-                    "§710 ур.: §dРегенерация I §7+ §bСопротивление I",
+                    "§71 ур.: §bСопротивление I",
+                    "§75 ур.: §bСопротивление II §7+ §dРегенерация I",
+                    "§710 ур.: §bСопротивление II §7+ §dРегенерация II",
                     "§7Прогресс по полученному урону",
                     "§7Прокачка ускорена примерно в 10 раз"
             ));
